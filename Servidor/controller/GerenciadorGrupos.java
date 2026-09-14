@@ -165,7 +165,13 @@ public class GerenciadorGrupos {
    * @return Lista de strings contendo os nomes dos grupos
    */
   public synchronized List<String> listarGrupos() {
-    return new ArrayList<>(gruposExistentes.keySet());
+    List<String> grupos = new ArrayList<>();
+    for (String g : gruposExistentes.keySet()) {
+      if (g != null && !g.startsWith("@")) {
+        grupos.add(g);
+      }
+    }
+    return grupos;
   }
 
   /**

@@ -858,6 +858,10 @@ public class ClienteGUI extends Application implements MessageListener {
     showInputOverlay("Criar / Entrar em Grupo", "Digite o nome do grupo:", resultado -> {
       if (resultado != null && !resultado.trim().isEmpty()) {
         String grupo = resultado.trim();
+        if (grupo.startsWith("@")) {
+          showErrorOverlay("Nome Invalido", "Nomes de grupo nao podem comecar com '@'. Selecione o usuario na lista 'Usuarios Online' para enviar mensagens privadas.");
+          return;
+        }
         APDU resposta = tcp.join(grupo, eu);
         if (resposta != null && Protocolo.OK.equals(resposta.getOperacao())) {
           if (!masterGroupData.contains(grupo)) {
@@ -1554,14 +1558,19 @@ public class ClienteGUI extends Application implements MessageListener {
   public void onMessageReceived(String destino, InfoUser remetente, String mensagem, boolean isPrivate) {
     Platform.runLater(() -> {
       String chatId;
-      if (isPrivate) {
-        chatId = "[PVT] " + remetente.getNome();
-        if (!masterUsersData.contains(remetente.getNome())) {
-          masterUsersData.add(remetente.getNome());
+      boolean ehPrivado = isPrivate || (destino != null && destino.trim().startsWith("@"));
+      if (ehPrivado) {
+        String nomeRemetente = remetente.getNome();
+        if (nomeRemetente != null && nomeRemetente.startsWith("@")) {
+          nomeRemetente = nomeRemetente.substring(1);
+        }
+        chatId = "[PVT] " + nomeRemetente;
+        if (!masterUsersData.contains(nomeRemetente)) {
+          masterUsersData.add(nomeRemetente);
         }
       } else {
         chatId = destino;
-        if (chatId != null && !chatId.trim().isEmpty()) {
+        if (chatId != null && !chatId.trim().isEmpty() && !chatId.startsWith("@")) {
           if (!masterGroupData.contains(chatId)) {
             masterGroupData.add(chatId);
           }
@@ -1580,13 +1589,13 @@ public class ClienteGUI extends Application implements MessageListener {
             knownGroupMembers.get(chatId).remove(remetente.getNome());
           }
         } else {
-          addChatBubble(chatId, remetente.getNome(), mensagem, false, isPrivate, false);
+          addChatBubble(chatId, remetente.getNome(), mensagem, false, ehPrivado, false);
         }
 
         // Unread messages indicator
         if (!chatId.equals(currentChat)) {
           unreadCounts.put(chatId, unreadCounts.getOrDefault(chatId, 0) + 1);
-          if (isPrivate)
+          if (ehPrivado)
             onlineUsersList.refresh();
           else
             groupList.refresh();
