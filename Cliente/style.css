@@ -1,0 +1,148 @@
+.root {
+  -fx-background-color: #e5e8d7;
+  -fx-font-family: "Segoe UI", "Inter", "Roboto", sans-serif;
+}
+
+.title-text {
+  -fx-font-family: "Impact";
+  -fx-font-size: 32px;
+  -fx-fill: #5b6623;
+  -fx-effect: dropshadow(gaussian, rgba(91,102,35,0.6), 8, 0.4, 0, 0);
+}
+
+.btn-eden {
+  -fx-background-color: linear-gradient(to bottom, #c9d873, #b8c464);
+  -fx-text-fill: #1a1e0b;
+  -fx-font-size: 14px;
+  -fx-font-weight: bold;
+  -fx-background-radius: 20px;
+  -fx-border-color: #8a9b3a;
+  -fx-border-radius: 20px;
+  -fx-border-width: 1px;
+  -fx-padding: 10px 30px;
+  -fx-cursor: hand;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 4, 0, 0, 2);
+}
+
+.btn-eden:hover {
+  -fx-background-color: linear-gradient(to bottom, #d8e87d, #c9d873);
+  -fx-effect: dropshadow(gaussian, rgba(201,216,115,0.7), 10, 0.3, 0, 0);
+}
+
+.btn-eden:pressed {
+  -fx-background-color: #a0b050;
+  -fx-effect: innershadow(gaussian, rgba(0,0,0,0.4), 5, 0, 0, 2);
+  -fx-translate-y: 1px;
+}
+
+.chat-sidebar {
+  -fx-background-color: rgba(184, 196, 100, 0.85); /* #b8c464 with opacity */
+  -fx-border-color: #8a9b3a;
+  -fx-border-width: 0 1px 0 0;
+  -fx-padding: 10px;
+}
+
+.chat-main {
+  -fx-background-color: transparent;
+}
+
+.chat-input-bar {
+  -fx-background-color: rgba(138, 155, 58, 0.85); /* #8a9b3a with opacity */
+  -fx-border-color: #5b6623;
+  -fx-border-width: 1px 0 0 0;
+  -fx-padding: 10px;
+}
+
+.chat-input-field {
+  -fx-background-color: rgba(229, 232, 215, 0.5); /* #e5e8d7 */
+  -fx-text-fill: #1a1e0b;
+  -fx-prompt-text-fill: #5b6623;
+  -fx-font-size: 14px;
+  -fx-background-radius: 20px;
+  -fx-border-color: #a0b050;
+  -fx-border-radius: 20px;
+}
+
+.chat-bubble-received {
+  -fx-background-color: rgba(140, 158, 94, 0.9); /* #8c9e5e */
+  -fx-text-fill: #1a1e0b;
+  -fx-padding: 12px;
+  -fx-background-radius: 0px 15px 15px 15px;
+  -fx-border-color: #5b6623;
+  -fx-border-width: 0 0 0 3px; /* corpoativo sci-fi: borda lateral esquerda */
+  -fx-border-radius: 0px 15px 15px 15px;
+  -fx-font-size: 14px;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 4, 0, 2, 2);
+}
+
+.chat-bubble-sent {
+  -fx-background-color: rgba(91, 102, 35, 0.9); /* #5b6623 */
+  -fx-text-fill: #e5e8d7;
+  -fx-padding: 12px;
+  -fx-background-radius: 15px 0px 15px 15px;
+  -fx-border-color: #c9d873;
+  -fx-border-width: 0 3px 0 0; /* corpoativo sci-fi: borda lateral direita */
+  -fx-border-radius: 15px 0px 15px 15px;
+  -fx-font-size: 14px;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 4, 0, -2, 2);
+}
+
+.chat-scroll-pane {
+  -fx-background-color: transparent;
+  -fx-background: transparent;
+}
+.chat-scroll-pane .viewport {
+  -fx-background-color: transparent;
+}
+
+/* Custom ScrollBar para dar o toque Sci-Fi */
+.scroll-bar:vertical, .scroll-bar:horizontal {
+  -fx-background-color: transparent;
+}
+.scroll-bar:vertical .track, .scroll-bar:horizontal .track {
+  -fx-background-color: rgba(160, 176, 80, 0.2);
+  -fx-border-color: transparent;
+  -fx-background-radius: 0;
+}
+.scroll-bar:vertical .thumb, .scroll-bar:horizontal .thumb {
+  -fx-background-color: #8a9b3a;
+  -fx-background-radius: 10px;
+}
+.scroll-bar:vertical .thumb:hover, .scroll-bar:horizontal .thumb:hover {
+  -fx-background-color: #a0b050;
+}
+
+.user-item {
+  -fx-background-color: transparent;
+  -fx-padding: 10px;
+}
+.user-item:hover {
+  -fx-background-color: rgba(209, 226, 122, 0.5); /* #d1e27a */
+  -fx-background-radius: 10px;
+  -fx-border-color: #c9d873;
+  -fx-border-radius: 10px;
+}
+
+.text-input {
+  -fx-background-color: rgba(255, 255, 255, 0.5);
+  -fx-background-radius: 20px;
+  -fx-border-color: #8a9b3a;
+  -fx-border-radius: 20px;
+  -fx-padding: 10px;
+  -fx-font-family: "Consolas", "Courier New", monospace; /* fonte mono sci-fi */
+}
+
+.text-input:focused {
+  -fx-background-color: rgba(255, 255, 255, 0.8);
+  -fx-border-color: #5b6623;
+  -fx-effect: dropshadow(gaussian, rgba(91,102,35,0.4), 6, 0.2, 0, 0);
+}
+
+.error-overlay {
+  -fx-background-color: rgba(229, 232, 215, 0.85); /* vidro fosco */
+}
+
+.error-box {
+  -fx-background-color: transparent;
+  -fx-alignment: center;
+}

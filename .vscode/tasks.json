@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Limpar .class",
+      "type": "shell",
+      "command": "./limpar.sh",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "close": true
+      }
+    },
+    {
+      "label": "Compilar Tudo",
+      "type": "shell",
+      "command": "mkdir -p Cliente/bin Servidor/bin && /usr/lib/jvm/zulu8-fx-bin/bin/javac -d Cliente/bin $(find Cliente -name '*.java') && cp Cliente/style.css Cliente/bin/ 2>/dev/null || true && mkdir -p Cliente/bin/view && cp Cliente/view/edenIcon.png Cliente/bin/view/ 2>/dev/null || true && /usr/lib/jvm/zulu8-fx-bin/bin/javac -d Servidor/bin $(find Servidor -name '*.java')",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$javac"]
+    },
+    {
+      "label": "Rodar Servidor (Terminal)",
+      "type": "shell",
+      "command": "cd Servidor && /usr/lib/jvm/zulu8-fx-bin/bin/java -cp bin Principal",
+      "dependsOn": ["Compilar Tudo"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Rodar Cliente (Terminal)",
+      "type": "shell",
+      "command": "cd Cliente && /usr/lib/jvm/zulu8-fx-bin/bin/java -cp bin Principal",
+      "dependsOn": ["Compilar Tudo"],
+      "problemMatcher": []
+    }
+  ]
+}

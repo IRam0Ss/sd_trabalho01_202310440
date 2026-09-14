@@ -1,0 +1,6 @@
+# Pastas de saída de compilação
+Cliente/bin/
+Servidor/bin/
+bin/
+*.class
+
