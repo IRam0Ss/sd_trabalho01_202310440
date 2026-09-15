@@ -93,6 +93,9 @@ public class ClienteGUI extends Application implements MessageListener {
   private Map<String, String> messageToChatMap = new HashMap<>();
   private Map<String, Set<String>> messageReadConfirmations = new HashMap<>();
   private Map<String, Set<String>> messageDeliveryConfirmations = new HashMap<>();
+  private boolean isVuMode = false;
+  private Set<String> openedVuMessageIds = new HashSet<>();
+  private ToggleButton btnToggleVURef;
 
   private static class MessageConfirmTask {
     String idMensagem;
@@ -755,10 +758,26 @@ public class ClienteGUI extends Application implements MessageListener {
         "-fx-background-color: linear-gradient(to bottom, #4f5a2d, #3f4a23); -fx-text-fill: #d8e87d; -fx-background-radius: 20px; -fx-border-color: #5b6623; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-padding: 10px 20px; -fx-font-size: 13px; -fx-font-weight: bold; -fx-cursor: hand;");
     addHoverScale(btnSend);
 
+    ToggleButton btnToggleVU = new ToggleButton("\uD83D\uDC41 VU");
+    btnToggleVU.setTooltip(new Tooltip("Visualizacao Unica (Mensagem Temporaria)"));
+    btnToggleVU.setStyle(
+        "-fx-background-color: transparent; -fx-text-fill: #d8e87d; -fx-border-color: #d8e87d; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;");
+    btnToggleVU.setOnAction(e -> {
+      isVuMode = btnToggleVU.isSelected();
+      if (isVuMode) {
+        btnToggleVU.setStyle(
+            "-fx-background-color: #00f0ff; -fx-text-fill: #1a1e0b; -fx-border-color: #00f0ff; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.8), 6, 0.5, 0, 0);");
+      } else {
+        btnToggleVU.setStyle(
+            "-fx-background-color: transparent; -fx-text-fill: #d8e87d; -fx-border-color: #d8e87d; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;");
+      }
+    });
+    this.btnToggleVURef = btnToggleVU;
+
     btnSend.setOnAction(e -> onSendMessage(txtMsg));
     txtMsg.setOnAction(e -> onSendMessage(txtMsg));
 
-    inputBar.getChildren().addAll(txtMsg, btnSend);
+    inputBar.getChildren().addAll(btnToggleVU, txtMsg, btnSend);
 
     centerArea.getChildren().addAll(header, chatContainer, inputBar);
 
@@ -1117,11 +1136,20 @@ public class ClienteGUI extends Application implements MessageListener {
 
     try {
       String idMensagem;
+      boolean sentAsVu = isVuMode;
       if (currentChat.startsWith("[PVT] ")) {
         String destino = currentChat.substring(6);
-        idMensagem = udp.sendPvt(destino, eu, msg);
+        if (sentAsVu) {
+          idMensagem = udp.sendPvtVu(destino, eu, msg);
+        } else {
+          idMensagem = udp.sendPvt(destino, eu, msg);
+        }
       } else {
-        idMensagem = udp.send(currentChat, eu, msg);
+        if (sentAsVu) {
+          idMensagem = udp.sendVu(currentChat, eu, msg);
+        } else {
+          idMensagem = udp.send(currentChat, eu, msg);
+        }
       }
 
       if (idMensagem != null) {
@@ -1130,8 +1158,15 @@ public class ClienteGUI extends Application implements MessageListener {
         messageDeliveryConfirmations.put(idMensagem, new HashSet<>());
       }
 
-      addChatBubble(currentChat, eu.getNome(), msg, true, false, false, idMensagem);
+      addChatBubble(currentChat, eu.getNome(), msg, true, false, false, idMensagem, sentAsVu);
       txtMsg.clear();
+
+      if (isVuMode && btnToggleVURef != null) {
+        isVuMode = false;
+        btnToggleVURef.setSelected(false);
+        btnToggleVURef.setStyle(
+            "-fx-background-color: transparent; -fx-text-fill: #d8e87d; -fx-border-color: #d8e87d; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;");
+      }
     } catch (exceptions.ConexaoException e) {
       showErrorOverlay("Erro de Envio", "Falha ao enviar mensagem: " + e.getMessage());
     }
@@ -1152,11 +1187,16 @@ public class ClienteGUI extends Application implements MessageListener {
 
   private void addChatBubble(String chatId, String senderName, String text, boolean sentByMe, boolean isPrivate,
       boolean isSystem) {
-    addChatBubble(chatId, senderName, text, sentByMe, isPrivate, isSystem, null);
+    addChatBubble(chatId, senderName, text, sentByMe, isPrivate, isSystem, null, false);
   }
 
   private void addChatBubble(String chatId, String senderName, String text, boolean sentByMe, boolean isPrivate,
       boolean isSystem, String idMensagem) {
+    addChatBubble(chatId, senderName, text, sentByMe, isPrivate, isSystem, idMensagem, false);
+  }
+
+  private void addChatBubble(String chatId, String senderName, String text, boolean sentByMe, boolean isPrivate,
+      boolean isSystem, String idMensagem, boolean isVisualizacaoUnica) {
     if (!chatHistories.containsKey(chatId)) {
       VBox newHistory = new VBox(10);
       newHistory.setPadding(new Insets(15));
@@ -1204,6 +1244,12 @@ public class ClienteGUI extends Application implements MessageListener {
       metaBox.getChildren().add(timeLbl);
 
       if (sentByMe) {
+        if (isVisualizacaoUnica) {
+          Label lblVU = new Label(" \uD83D\uDC41 VU ");
+          lblVU.setFont(Font.font("Segoe UI", FontWeight.BOLD, 10));
+          lblVU.setStyle("-fx-text-fill: #00f0ff; -fx-font-weight: bold;");
+          metaBox.getChildren().add(lblVU);
+        }
         Label lblTick = new Label(" \u2713");
         lblTick.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
         lblTick.setStyle("-fx-text-fill: #8899a6; -fx-font-weight: bold;");
@@ -1213,17 +1259,18 @@ public class ClienteGUI extends Application implements MessageListener {
         metaBox.getChildren().add(lblTick);
       }
 
-      Label lblMsg = new Label(text);
-      lblMsg.setWrapText(true);
-      lblMsg.setFont(Font.font("Segoe UI", 13));
-
       VBox bubble = new VBox(2);
       bubble.setPadding(new Insets(8, 12, 6, 12));
 
       if (sentByMe) {
         bubble.setStyle(
             "-fx-background-color: rgba(60, 72, 22, 0.95); -fx-background-radius: 15px 0px 15px 15px; -fx-border-color: #c9d873; -fx-border-width: 0 2px 0 0; -fx-border-radius: 15px 0px 15px 15px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 4, 0, -2, 2);");
+
+        Label lblMsg = new Label(isVisualizacaoUnica ? ("\uD83D\uDD12 " + text + " [VU]") : text);
+        lblMsg.setWrapText(true);
+        lblMsg.setFont(Font.font("Segoe UI", 13));
         lblMsg.setStyle("-fx-text-fill: #e5e8d7;");
+
         bubbleContainer.setAlignment(Pos.CENTER_RIGHT);
         bubble.getChildren().addAll(lblMsg, metaBox);
       } else {
@@ -1234,9 +1281,30 @@ public class ClienteGUI extends Application implements MessageListener {
           bubble.setStyle(
               "-fx-background-color: rgba(122, 143, 74, 0.95); -fx-background-radius: 0px 15px 15px 15px; -fx-border-color: #c9d873; -fx-border-width: 1.5px; -fx-border-radius: 0px 15px 15px 15px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 4, 0, 2, 2);");
         }
-        lblMsg.setStyle("-fx-text-fill: #1a1e0b;");
+
         bubbleContainer.setAlignment(Pos.CENTER_LEFT);
-        bubble.getChildren().addAll(header, lblMsg, metaBox);
+
+        if (isVisualizacaoUnica) {
+          if (idMensagem != null && openedVuMessageIds.contains(idMensagem)) {
+            Label lblExpired = new Label("\uD83D\uDD12 Mensagem de Visualizacao Unica Expirada");
+            lblExpired.setFont(Font.font("Segoe UI", 12));
+            lblExpired.setStyle("-fx-text-fill: #555555; -fx-font-style: italic;");
+            bubble.getChildren().addAll(header, lblExpired, metaBox);
+          } else {
+            Button btnOpenVU = new Button("\uD83D\uDC41 Abrir Mensagem (1 Visualizacao)");
+            btnOpenVU.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+            btnOpenVU.setStyle(
+                "-fx-background-color: #1a2214; -fx-text-fill: #00f0ff; -fx-border-color: #00f0ff; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 6px 12px; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.4), 4, 0, 0, 0);");
+            btnOpenVU.setOnAction(e -> showVuModalOverlay(idMensagem, senderName, text, chatId, isPrivate, btnOpenVU));
+            bubble.getChildren().addAll(header, btnOpenVU, metaBox);
+          }
+        } else {
+          Label lblMsg = new Label(text);
+          lblMsg.setWrapText(true);
+          lblMsg.setFont(Font.font("Segoe UI", 13));
+          lblMsg.setStyle("-fx-text-fill: #1a1e0b;");
+          bubble.getChildren().addAll(header, lblMsg, metaBox);
+        }
       }
 
       bubbleContainer.getChildren().add(bubble);
@@ -1263,6 +1331,65 @@ public class ClienteGUI extends Application implements MessageListener {
     slide.setFromY(10);
     slide.setToY(0);
     slide.play();
+  }
+
+  private void showVuModalOverlay(String idMensagem, String senderName, String secretText, String chatId, boolean isPrivate, Button btnOpenVU) {
+    StackPane overlay = new StackPane();
+    overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.75);");
+    overlay.setPadding(new Insets(20));
+
+    VBox modalCard = new VBox(15);
+    modalCard.setMaxWidth(420);
+    modalCard.setPadding(new Insets(25));
+    modalCard.setAlignment(Pos.CENTER);
+    modalCard.setStyle(
+        "-fx-background-color: #1a2214; -fx-border-color: #00f0ff; -fx-border-width: 2px; -fx-border-radius: 15px; -fx-background-radius: 15px; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.4), 15, 0, 0, 0);");
+
+    Label title = new Label("\uD83D\uDD12 Mensagem de Visualizacao Unica");
+    title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 16));
+    title.setTextFill(Color.web("#00f0ff"));
+
+    Label subtitle = new Label("Enviado por: " + senderName);
+    subtitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 12));
+    subtitle.setTextFill(Color.web("#a0b050"));
+
+    Label content = new Label(secretText);
+    content.setWrapText(true);
+    content.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
+    content.setTextFill(Color.web("#ffffff"));
+    content.setStyle("-fx-background-color: rgba(255,255,255,0.1); -fx-padding: 15px; -fx-background-radius: 10px;");
+
+    Label warning = new Label("Esta mensagem ira expirar permanentemente assim que voce fechar este pop-up!");
+    warning.setFont(Font.font("Segoe UI", 11));
+    warning.setTextFill(Color.web("#ffaa00"));
+
+    Button btnClose = new Button("Fechar e Expirar Mensagem");
+    btnClose.setStyle(
+        "-fx-background-color: linear-gradient(to bottom, #00f0ff, #00a8cc); -fx-text-fill: #1a1e0b; -fx-font-weight: bold; -fx-font-size: 13px; -fx-background-radius: 20px; -fx-padding: 8px 20px; -fx-cursor: hand;");
+
+    Runnable doCloseAndExpire = () -> {
+      root.getChildren().remove(overlay);
+      if (idMensagem != null) {
+        openedVuMessageIds.add(idMensagem);
+        // Envia confirmacao de leitura (Status 3 = Lido)
+        if (udp != null) {
+          String destinoConfirm = isPrivate ? ("@" + eu.getNome()) : chatId;
+          udp.sendConfirm(idMensagem, 3, destinoConfirm, senderName);
+        }
+      }
+      if (btnOpenVU != null) {
+        btnOpenVU.setText("\uD83D\uDD12 Mensagem Expirada");
+        btnOpenVU.setDisable(true);
+        btnOpenVU.setStyle("-fx-background-color: #2b3322; -fx-text-fill: #888888; -fx-border-color: #555555; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 6px 12px;");
+      }
+    };
+
+    btnClose.setOnAction(e -> doCloseAndExpire.run());
+
+    modalCard.getChildren().addAll(title, subtitle, content, warning, btnClose);
+    overlay.getChildren().add(modalCard);
+
+    root.getChildren().add(overlay);
   }
 
   // =========================================================================
@@ -1613,7 +1740,7 @@ public class ClienteGUI extends Application implements MessageListener {
   // CALLBACKS DO LISTENER (Thread UDP -> GUI)
   // =========================================================================
   @Override
-  public void onMessageReceived(String idMensagem, String destino, InfoUser remetente, String mensagem, boolean isPrivate) {
+  public void onMessageReceived(String idMensagem, String destino, InfoUser remetente, String mensagem, boolean isPrivate, boolean isVisualizacaoUnica) {
     Platform.runLater(() -> {
       String chatId;
       boolean ehPrivado = isPrivate || (destino != null && destino.trim().startsWith("@"));
@@ -1640,22 +1767,25 @@ public class ClienteGUI extends Application implements MessageListener {
 
       if (chatId != null && !chatId.trim().isEmpty()) {
         if (mensagem.equals("~JOINED~")) {
-          addChatBubble(chatId, "SYSTEM", remetente.getNome() + " entrou no grupo.", false, false, true, null);
+          addChatBubble(chatId, "SYSTEM", remetente.getNome() + " entrou no grupo.", false, false, true, null, false);
         } else if (mensagem.equals("~LEFT~")) {
-          addChatBubble(chatId, "SYSTEM", remetente.getNome() + " saiu do grupo.", false, false, true, null);
+          addChatBubble(chatId, "SYSTEM", remetente.getNome() + " saiu do grupo.", false, false, true, null, false);
           if (knownGroupMembers.containsKey(chatId)) {
             knownGroupMembers.get(chatId).remove(remetente.getNome());
           }
         } else {
-          addChatBubble(chatId, remetente.getNome(), mensagem, false, ehPrivado, false, idMensagem);
+          addChatBubble(chatId, remetente.getNome(), mensagem, false, ehPrivado, false, idMensagem, isVisualizacaoUnica);
 
-          // Confirmar leitura (Status 3 = Lido) se a conversa estiver aberta na tela
-          if (chatId.equals(currentChat) && idMensagem != null && udp != null) {
-            String destinoConfirm = ehPrivado ? ("@" + eu.getNome()) : chatId;
-            udp.sendConfirm(idMensagem, 3, destinoConfirm, remetente.getNome());
-          } else if (idMensagem != null && !mensagem.startsWith("~")) {
-            unreadMessageIds.putIfAbsent(chatId, new ArrayList<>());
-            unreadMessageIds.get(chatId).add(new MessageConfirmTask(idMensagem, remetente.getNome(), ehPrivado));
+          // Confirmar leitura (Status 3 = Lido) apenas se nao for de visualizacao unica.
+          // Para mensagens VU, a confirmacao de leitura ocorre exclusivamente ao fechar o pop-up modal.
+          if (!isVisualizacaoUnica) {
+            if (chatId.equals(currentChat) && idMensagem != null && udp != null) {
+              String destinoConfirm = ehPrivado ? ("@" + eu.getNome()) : chatId;
+              udp.sendConfirm(idMensagem, 3, destinoConfirm, remetente.getNome());
+            } else if (idMensagem != null && !mensagem.startsWith("~")) {
+              unreadMessageIds.putIfAbsent(chatId, new ArrayList<>());
+              unreadMessageIds.get(chatId).add(new MessageConfirmTask(idMensagem, remetente.getNome(), ehPrivado));
+            }
           }
         }
 

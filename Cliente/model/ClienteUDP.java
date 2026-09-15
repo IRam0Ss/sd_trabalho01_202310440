@@ -152,6 +152,57 @@ public class ClienteUDP implements Runnable {
   }
 
   /**
+   * Envia uma mensagem de visualizacao unica destinada a um grupo via datagrama UDP.
+   * 
+   * @param nomeGrupo Nome do grupo de destino.
+   * @param usuario   Dados do usuario remetente.
+   * @param mensagem  Texto da mensagem sensivel.
+   * @return ID unico gerado para a mensagem.
+   * @throws exceptions.ConexaoException Caso ocorra erro no socket.
+   */
+  public String sendVu(String nomeGrupo, InfoUser usuario, String mensagem) throws exceptions.ConexaoException {
+    APDU apdu = new APDU("SENDVU", nomeGrupo, usuario.getNome(), mensagem, usuario.getPorta(), true);
+    try {
+      byte[] dadosEnviados = serializarAPDU(apdu);
+      DatagramPacket pacoteEnvio = new DatagramPacket(dadosEnviados, dadosEnviados.length, IP_SERVIDOR, portaServidor);
+      socketUDP.send(pacoteEnvio);
+
+      System.out.println("[CLIENTE:UDP] [INFO] Mensagem de visualizacao unica enviada ao servidor. ID: " + apdu.getIdMensagem());
+      return apdu.getIdMensagem();
+    } catch (IOException e) {
+      System.out.println("[CLIENTE:UDP] [ERROR] Falha ao enviar mensagem de visualizacao unica.");
+      e.printStackTrace();
+      throw new exceptions.ConexaoException("Falha ao enviar mensagem SENDVU via UDP", e);
+    }
+  }
+
+  /**
+   * Envia uma mensagem privada de visualizacao unica direta a um usuario especifico.
+   * 
+   * @param nomeDestinatario Nome do usuario destinatario.
+   * @param usuario          Dados do remetente.
+   * @param mensagem         Texto da mensagem privada sensivel.
+   * @return ID unico gerado para a mensagem.
+   * @throws exceptions.ConexaoException Caso ocorra erro no socket.
+   */
+  public String sendPvtVu(String nomeDestinatario, InfoUser usuario, String mensagem) throws exceptions.ConexaoException {
+    APDU apdu = new APDU("SENDPVT", "@" + nomeDestinatario, usuario.getNome(), mensagem, usuario.getPorta(), nomeDestinatario);
+    apdu.setVisualizacaoUnica(true);
+    try {
+      byte[] dadosEnviados = serializarAPDU(apdu);
+      DatagramPacket pacoteEnvio = new DatagramPacket(dadosEnviados, dadosEnviados.length, IP_SERVIDOR, portaServidor);
+      socketUDP.send(pacoteEnvio);
+
+      System.out.println("[CLIENTE:UDP] [INFO] Mensagem privada de visualizacao unica enviada ao servidor. ID: " + apdu.getIdMensagem());
+      return apdu.getIdMensagem();
+    } catch (IOException e) {
+      System.out.println("[CLIENTE:UDP] [ERROR] Falha ao enviar mensagem privada de visualizacao unica.");
+      e.printStackTrace();
+      throw new exceptions.ConexaoException("Falha ao enviar mensagem privada SENDVU via UDP", e);
+    }
+  }
+
+  /**
    * Envia uma APDU de confirmacao (CONFIRM) de recebimento ou leitura para o servidor.
    * 
    * @param idMensagem         Identificador unico da mensagem recebida.
@@ -230,16 +281,19 @@ public class ClienteUDP implements Runnable {
             sendConfirm(apdu.getIdMensagem(), 2, "@" + meuNome, remetente.getNome());
           }
 
+          boolean isVuPvt = apdu.isVisualizacaoUnica();
           if (listener != null)
-            listener.onMessageReceived(apdu.getIdMensagem(), remetente.getNome(), remetente, mensagemPvt, true);
+            listener.onMessageReceived(apdu.getIdMensagem(), remetente.getNome(), remetente, mensagemPvt, true, isVuPvt);
           continue;
         }
 
         InfoUser usuario = new InfoUser(apdu.getNomeUsuario(), pacoteRecebido.getAddress().getHostAddress(), apdu.getPortaClienteUDP());
         String mensagem = apdu.getTextoMensagem();
         String grupo = apdu.getNomeGrupo();
+        boolean isVuGrupo = apdu.isVisualizacaoUnica() || utils.Protocolo.SENDVU.equals(comando);
+
         System.out.println("\n[CLIENTE:UDP] [INFO] Nova mensagem recebida no grupo " + grupo + ":\n"
-            + usuario.toString() + " enviou: " + mensagem);
+            + usuario.toString() + " enviou: " + mensagem + (isVuGrupo ? " [VU]" : ""));
 
         // Auto-ACK de entrega (Status 2: Entregue no dispositivo do cliente)
         if (apdu.getIdMensagem() != null && mensagem != null && !mensagem.startsWith("~")) {
@@ -247,7 +301,7 @@ public class ClienteUDP implements Runnable {
         }
 
         if (listener != null)
-          listener.onMessageReceived(apdu.getIdMensagem(), grupo, usuario, mensagem, false);
+          listener.onMessageReceived(apdu.getIdMensagem(), grupo, usuario, mensagem, false, isVuGrupo);
 
       } catch (SocketException e) {
         // Excecao esperada no encerramento normal do socket

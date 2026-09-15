@@ -24,13 +24,14 @@ public interface MessageListener {
   /**
    * Evento acionado na recepcao de uma mensagem de texto (grupo ou privada).
    * 
-   * @param idMensagem ID unico da mensagem recebida.
-   * @param destino    Nome do grupo alvo ou usuario de destino.
-   * @param remetente  Informacoes do usuario remetente da mensagem.
-   * @param mensagem   Conteudo textual recebido.
-   * @param isPrivate  Flag indicando se a mensagem e direta/privada (true) ou de grupo (false).
+   * @param idMensagem            ID unico da mensagem recebida.
+   * @param destino               Nome do grupo alvo ou usuario de destino.
+   * @param remetente             Informacoes do usuario remetente da mensagem.
+   * @param mensagem              Conteudo textual recebido.
+   * @param isPrivate             Flag indicando se a mensagem e direta/privada (true) ou de grupo (false).
+   * @param isVisualizacaoUnica  Flag indicando se e mensagem de visualizacao unica (true) ou normal (false).
    */
-  void onMessageReceived(String idMensagem, String destino, InfoUser remetente, String mensagem, boolean isPrivate);
+  void onMessageReceived(String idMensagem, String destino, InfoUser remetente, String mensagem, boolean isPrivate, boolean isVisualizacaoUnica);
 
   /**
    * Evento acionado quando o servidor envia sinalizacao de encerramento ou a conexao e perdida.
