@@ -88,6 +88,23 @@ public class ClienteGUI extends Application implements MessageListener {
   // New features state
   private Map<String, Integer> unreadCounts = new HashMap<>();
   private Map<String, Set<String>> knownGroupMembers = new HashMap<>();
+  private Map<String, Label> messageTickLabels = new HashMap<>();
+  private Map<String, List<MessageConfirmTask>> unreadMessageIds = new HashMap<>();
+  private Map<String, String> messageToChatMap = new HashMap<>();
+  private Map<String, Set<String>> messageReadConfirmations = new HashMap<>();
+  private Map<String, Set<String>> messageDeliveryConfirmations = new HashMap<>();
+
+  private static class MessageConfirmTask {
+    String idMensagem;
+    String senderName;
+    boolean isPrivate;
+
+    MessageConfirmTask(String idMensagem, String senderName, boolean isPrivate) {
+      this.idMensagem = idMensagem;
+      this.senderName = senderName;
+      this.isPrivate = isPrivate;
+    }
+  }
 
   @Override
   public void start(Stage primaryStage) {
@@ -401,6 +418,7 @@ public class ClienteGUI extends Application implements MessageListener {
         ClienteTCP tcpNovo = new ClienteTCP(ipServidor, portaTcp);
         ClienteUDP udpNovo = new ClienteUDP(ipServidor, portaUdp);
         udpNovo.setListener(this);
+        udpNovo.setMeuNome(nome);
 
         InfoUser usuario = new InfoUser(nome, tcpNovo.getIpLocal(), udpNovo.getPortaLocal());
         APDU resRegistro = tcpNovo.register(usuario);
@@ -1012,6 +1030,17 @@ public class ClienteGUI extends Application implements MessageListener {
         groupList.refresh();
     }
 
+    // Dispara confirmacoes de leitura (Status 3 = Lido) para mensagens pendentes desta conversa
+    if (unreadMessageIds.containsKey(chatId)) {
+      List<MessageConfirmTask> pending = unreadMessageIds.remove(chatId);
+      if (pending != null && udp != null) {
+        for (MessageConfirmTask task : pending) {
+          String destinoConfirm = task.isPrivate ? ("@" + eu.getNome()) : chatId;
+          udp.sendConfirm(task.idMensagem, 3, destinoConfirm, task.senderName);
+        }
+      }
+    }
+
     // Animar a troca do header
     FadeTransition headerFade = new FadeTransition(Duration.millis(200), lblChatHeader);
     headerFade.setFromValue(0.3);
@@ -1087,14 +1116,21 @@ public class ClienteGUI extends Application implements MessageListener {
       return;
 
     try {
+      String idMensagem;
       if (currentChat.startsWith("[PVT] ")) {
         String destino = currentChat.substring(6);
-        udp.sendPvt(destino, eu, msg);
+        idMensagem = udp.sendPvt(destino, eu, msg);
       } else {
-        udp.send(currentChat, eu, msg);
+        idMensagem = udp.send(currentChat, eu, msg);
       }
 
-      addChatBubble(currentChat, eu.getNome(), msg, true, false, false);
+      if (idMensagem != null) {
+        messageToChatMap.put(idMensagem, currentChat);
+        messageReadConfirmations.put(idMensagem, new HashSet<>());
+        messageDeliveryConfirmations.put(idMensagem, new HashSet<>());
+      }
+
+      addChatBubble(currentChat, eu.getNome(), msg, true, false, false, idMensagem);
       txtMsg.clear();
     } catch (exceptions.ConexaoException e) {
       showErrorOverlay("Erro de Envio", "Falha ao enviar mensagem: " + e.getMessage());
@@ -1116,6 +1152,11 @@ public class ClienteGUI extends Application implements MessageListener {
 
   private void addChatBubble(String chatId, String senderName, String text, boolean sentByMe, boolean isPrivate,
       boolean isSystem) {
+    addChatBubble(chatId, senderName, text, sentByMe, isPrivate, isSystem, null);
+  }
+
+  private void addChatBubble(String chatId, String senderName, String text, boolean sentByMe, boolean isPrivate,
+      boolean isSystem, String idMensagem) {
     if (!chatHistories.containsKey(chatId)) {
       VBox newHistory = new VBox(10);
       newHistory.setPadding(new Insets(15));
@@ -1138,9 +1179,9 @@ public class ClienteGUI extends Application implements MessageListener {
       VBox bubbleContainer = new VBox(4);
       bubbleContainer.setMaxWidth(400);
 
-      // Avatar and Name header
+      // Avatar and Name header (para mensagens de terceiros)
       HBox header = new HBox(6);
-      header.setAlignment(sentByMe ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
+      header.setAlignment(Pos.CENTER_LEFT);
 
       Circle avatar = new Circle(10, getColorForName(senderName));
       Label initial = new Label(senderName.substring(0, 1).toUpperCase());
@@ -1155,33 +1196,50 @@ public class ClienteGUI extends Application implements MessageListener {
       String timestamp = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
       Label timeLbl = new Label(timestamp);
       timeLbl.setFont(Font.font("Consolas", 10));
-      timeLbl.setTextFill(Color.web("#8a9b3a"));
+      timeLbl.setStyle("-fx-text-fill: #a0b050;");
+
+      HBox metaBox = new HBox(3);
+      metaBox.setAlignment(Pos.CENTER_RIGHT);
+      metaBox.setPadding(new Insets(2, 0, 0, 0));
+      metaBox.getChildren().add(timeLbl);
 
       if (sentByMe) {
-        header.getChildren().addAll(timeLbl, nameLbl, avatarStack);
-        bubbleContainer.setAlignment(Pos.CENTER_RIGHT);
-      } else {
-        header.getChildren().addAll(avatarStack, nameLbl, timeLbl);
-        bubbleContainer.setAlignment(Pos.CENTER_LEFT);
+        Label lblTick = new Label(" \u2713");
+        lblTick.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+        lblTick.setStyle("-fx-text-fill: #8899a6; -fx-font-weight: bold;");
+        if (idMensagem != null) {
+          messageTickLabels.put(idMensagem, lblTick);
+        }
+        metaBox.getChildren().add(lblTick);
       }
 
       Label lblMsg = new Label(text);
       lblMsg.setWrapText(true);
       lblMsg.setFont(Font.font("Segoe UI", 13));
 
+      VBox bubble = new VBox(2);
+      bubble.setPadding(new Insets(8, 12, 6, 12));
+
       if (sentByMe) {
-        lblMsg.setStyle(
-            "-fx-background-color: rgba(91, 102, 35, 0.9); -fx-text-fill: #e5e8d7; -fx-padding: 10px 14px; -fx-background-radius: 15px 0px 15px 15px; -fx-border-color: #c9d873; -fx-border-width: 0 3px 0 0; -fx-border-radius: 15px 0px 15px 15px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 4, 0, -2, 2);");
+        bubble.setStyle(
+            "-fx-background-color: rgba(60, 72, 22, 0.95); -fx-background-radius: 15px 0px 15px 15px; -fx-border-color: #c9d873; -fx-border-width: 0 2px 0 0; -fx-border-radius: 15px 0px 15px 15px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 4, 0, -2, 2);");
+        lblMsg.setStyle("-fx-text-fill: #e5e8d7;");
+        bubbleContainer.setAlignment(Pos.CENTER_RIGHT);
+        bubble.getChildren().addAll(lblMsg, metaBox);
       } else {
-        lblMsg.setStyle(
-            "-fx-background-color: rgba(140, 158, 94, 0.9); -fx-text-fill: #1a1e0b; -fx-padding: 10px 14px; -fx-background-radius: 0px 15px 15px 15px; -fx-border-color: #5b6623; -fx-border-width: 0 0 0 3px; -fx-border-radius: 0px 15px 15px 15px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 4, 0, 2, 2);");
+        header.getChildren().addAll(avatarStack, nameLbl);
+        bubble.setStyle(
+            "-fx-background-color: rgba(130, 148, 84, 0.95); -fx-background-radius: 0px 15px 15px 15px; -fx-border-color: #5b6623; -fx-border-width: 0 0 0 2px; -fx-border-radius: 0px 15px 15px 15px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 4, 0, 2, 2);");
         if (isPrivate) {
-          lblMsg.setStyle(
-              "-fx-background-color: rgba(122, 143, 74, 0.9); -fx-text-fill: #e5e8d7; -fx-padding: 10px 14px; -fx-background-radius: 0px 15px 15px 15px; -fx-border-color: #c9d873; -fx-border-width: 1.5px; -fx-border-radius: 0px 15px 15px 15px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 4, 0, 2, 2);");
+          bubble.setStyle(
+              "-fx-background-color: rgba(122, 143, 74, 0.95); -fx-background-radius: 0px 15px 15px 15px; -fx-border-color: #c9d873; -fx-border-width: 1.5px; -fx-border-radius: 0px 15px 15px 15px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 4, 0, 2, 2);");
         }
+        lblMsg.setStyle("-fx-text-fill: #1a1e0b;");
+        bubbleContainer.setAlignment(Pos.CENTER_LEFT);
+        bubble.getChildren().addAll(header, lblMsg, metaBox);
       }
 
-      bubbleContainer.getChildren().addAll(header, lblMsg);
+      bubbleContainer.getChildren().add(bubble);
 
       row.getChildren().add(bubbleContainer);
       if (sentByMe)
@@ -1555,7 +1613,7 @@ public class ClienteGUI extends Application implements MessageListener {
   // CALLBACKS DO LISTENER (Thread UDP -> GUI)
   // =========================================================================
   @Override
-  public void onMessageReceived(String destino, InfoUser remetente, String mensagem, boolean isPrivate) {
+  public void onMessageReceived(String idMensagem, String destino, InfoUser remetente, String mensagem, boolean isPrivate) {
     Platform.runLater(() -> {
       String chatId;
       boolean ehPrivado = isPrivate || (destino != null && destino.trim().startsWith("@"));
@@ -1582,14 +1640,23 @@ public class ClienteGUI extends Application implements MessageListener {
 
       if (chatId != null && !chatId.trim().isEmpty()) {
         if (mensagem.equals("~JOINED~")) {
-          addChatBubble(chatId, "SYSTEM", remetente.getNome() + " entrou no grupo.", false, false, true);
+          addChatBubble(chatId, "SYSTEM", remetente.getNome() + " entrou no grupo.", false, false, true, null);
         } else if (mensagem.equals("~LEFT~")) {
-          addChatBubble(chatId, "SYSTEM", remetente.getNome() + " saiu do grupo.", false, false, true);
+          addChatBubble(chatId, "SYSTEM", remetente.getNome() + " saiu do grupo.", false, false, true, null);
           if (knownGroupMembers.containsKey(chatId)) {
             knownGroupMembers.get(chatId).remove(remetente.getNome());
           }
         } else {
-          addChatBubble(chatId, remetente.getNome(), mensagem, false, ehPrivado, false);
+          addChatBubble(chatId, remetente.getNome(), mensagem, false, ehPrivado, false, idMensagem);
+
+          // Confirmar leitura (Status 3 = Lido) se a conversa estiver aberta na tela
+          if (chatId.equals(currentChat) && idMensagem != null && udp != null) {
+            String destinoConfirm = ehPrivado ? ("@" + eu.getNome()) : chatId;
+            udp.sendConfirm(idMensagem, 3, destinoConfirm, remetente.getNome());
+          } else if (idMensagem != null && !mensagem.startsWith("~")) {
+            unreadMessageIds.putIfAbsent(chatId, new ArrayList<>());
+            unreadMessageIds.get(chatId).add(new MessageConfirmTask(idMensagem, remetente.getNome(), ehPrivado));
+          }
         }
 
         // Unread messages indicator
@@ -1619,6 +1686,96 @@ public class ClienteGUI extends Application implements MessageListener {
     Platform.runLater(() -> {
       refreshOnlineUsers();
     });
+  }
+
+  @Override
+  public void onTickReceived(String idMensagem, int status, String nomeConfirmou) {
+    Platform.runLater(() -> {
+      if (idMensagem == null)
+        return;
+      Label lblTick = messageTickLabels.get(idMensagem);
+      if (lblTick == null)
+        return;
+
+      String chatId = messageToChatMap.get(idMensagem);
+      boolean isPrivate = (chatId != null && chatId.startsWith("[PVT] "));
+
+      if (status == -1) {
+        lblTick.setText(" \u2715");
+        lblTick.setStyle("-fx-text-fill: #ff3344; -fx-font-weight: bold;");
+        return;
+      }
+
+      if (isPrivate || chatId == null) {
+        // Chat Privado (1 para 1): Transicao direta
+        if (status == 2) {
+          lblTick.setText(" \u2713\u2713");
+          lblTick.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold;"); // Entregue ao dispositivo (Branco Puro)
+        } else if (status == 3) {
+          lblTick.setText(" \u2713\u2713");
+          lblTick.setStyle("-fx-text-fill: #00f0ff; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.9), 8, 0.6, 0, 0);"); // Lido pelo destinatario (Ciano Neon Glow)
+        }
+      } else {
+        // Chat de Grupo: Requer que TODOS os membros (exceto eu) vejam a mensagem para marcar como LIDA (Status 3)
+        Set<String> readUsers = messageReadConfirmations.computeIfAbsent(idMensagem, k -> new HashSet<>());
+        Set<String> deliveredUsers = messageDeliveryConfirmations.computeIfAbsent(idMensagem, k -> new HashSet<>());
+
+        if (nomeConfirmou != null && !nomeConfirmou.isEmpty()) {
+          if (status == 2)
+            deliveredUsers.add(nomeConfirmou);
+          if (status == 3) {
+            deliveredUsers.add(nomeConfirmou);
+            readUsers.add(nomeConfirmou);
+          }
+        }
+
+        // Determina lista de outros membros do grupo
+        Set<String> expectedMembers = new HashSet<>();
+        if (knownGroupMembers.containsKey(chatId)) {
+          expectedMembers.addAll(knownGroupMembers.get(chatId));
+        }
+        expectedMembers.remove(eu.getNome()); // Remove a si mesmo
+
+        // Se a lista local estiver vazia ou desatualizada, tenta consultar via TCP
+        if (expectedMembers.isEmpty() && tcp != null) {
+          final String gId = chatId;
+          new Thread(() -> {
+            APDU resp = tcp.listMembers(gId);
+            if (resp != null && Protocolo.OK.equals(resp.getOperacao())) {
+              String data = resp.getTextoMensagem();
+              if (data != null && !data.isEmpty()) {
+                Set<String> mSet = new HashSet<>();
+                for (String m : data.split(",")) {
+                  String nameStr = m.trim();
+                  if (!nameStr.equalsIgnoreCase(eu.getNome())) {
+                    mSet.add(nameStr);
+                  }
+                }
+                Platform.runLater(() -> {
+                  knownGroupMembers.put(gId, mSet);
+                  atualizarTickGrupo(lblTick, readUsers, deliveredUsers, mSet);
+                });
+              }
+            }
+          }).start();
+        } else {
+          atualizarTickGrupo(lblTick, readUsers, deliveredUsers, expectedMembers);
+        }
+      }
+    });
+  }
+
+  private void atualizarTickGrupo(Label lblTick, Set<String> readUsers, Set<String> deliveredUsers, Set<String> expectedMembers) {
+    boolean todosLeram = !expectedMembers.isEmpty() && readUsers.containsAll(expectedMembers);
+    boolean algumEntregue = !deliveredUsers.isEmpty() || !readUsers.isEmpty();
+
+    if (todosLeram) {
+      lblTick.setText(" \u2713\u2713");
+      lblTick.setStyle("-fx-text-fill: #00f0ff; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.9), 8, 0.6, 0, 0);"); // Lido por TODOS (Ciano Neon Glow)
+    } else if (algumEntregue) {
+      lblTick.setText(" \u2713\u2713");
+      lblTick.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold;"); // Entregue ao grupo (Branco Puro)
+    }
   }
 
   @Override

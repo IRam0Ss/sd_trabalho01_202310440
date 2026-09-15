@@ -2,7 +2,7 @@
  * Autor: Iury Ramos Sodre
  * Matricula: 202310440
  * Inicio: 15/06/2026
- * Ultima alteracao: 14/09/2026
+ * Ultima alteracao: 15/09/2026
  * Nome: ClienteUDP
  * Funcao: Gerencia o envio e recepcao assincrona de datagramas UDP para mensagens em tempo real.
  */
@@ -26,6 +26,7 @@ import utils.InfoUser;
 /**
  * Classe responsavel por gerenciar as conexoes e canais UDP do cliente.
  * Implementa {@link Runnable} para escutar em background mensagens de grupo, mensagens privadas e notificacoes.
+ * Suporta o envio e recepcao de confirmacoes de mensagem (ticks de entrega/leitura).
  * 
  * @author Iury Ramos Sodre (Matricula: 202310440)
  * @version 2.0
@@ -38,6 +39,7 @@ public class ClienteUDP implements Runnable {
   private DatagramSocket socketUDP;
   private static final int BUFFER = 4096;
   private MessageListener listener;
+  private String meuNome;
 
   /**
    * Construtor que inicializa o socket UDP em uma porta efemera disponivel.
@@ -77,6 +79,15 @@ public class ClienteUDP implements Runnable {
   }
 
   /**
+   * Define o nome do usuario cliente local para autorrespostas de confirmacao (CONFIRM).
+   * 
+   * @param meuNome Nome do usuario logado.
+   */
+  public void setMeuNome(String meuNome) {
+    this.meuNome = meuNome;
+  }
+
+  /**
    * Converte uma APDU em array de bytes para transmissao via datagrama UDP.
    * 
    * @param apdu Objeto APDU a ser serializado.
@@ -97,15 +108,17 @@ public class ClienteUDP implements Runnable {
    * @param nomeGrupo Nome do grupo de destino.
    * @param usuario   Dados do usuario remetente.
    * @param mensagem  Texto da mensagem a ser enviada.
+   * @return ID unico gerado para a mensagem (para rastreamento de ticks).
    * @throws exceptions.ConexaoException Caso ocorra erro de envio no socket.
    */
-  public void send(String nomeGrupo, InfoUser usuario, String mensagem) throws exceptions.ConexaoException {
+  public String send(String nomeGrupo, InfoUser usuario, String mensagem) throws exceptions.ConexaoException {
     APDU apdu = new APDU("SEND", nomeGrupo, usuario.getNome(), mensagem, usuario.getPorta());
     try {
       byte[] dadosEnviados = serializarAPDU(apdu);
       DatagramPacket pacoteEnvio = new DatagramPacket(dadosEnviados, dadosEnviados.length, IP_SERVIDOR, portaServidor);
       socketUDP.send(pacoteEnvio);
-      System.out.println("[CLIENTE:UDP] [INFO] Mensagem enviada ao servidor.");
+      System.out.println("[CLIENTE:UDP] [INFO] Mensagem enviada ao servidor. ID: " + apdu.getIdMensagem());
+      return apdu.getIdMensagem();
     } catch (IOException e) {
       System.out.println("[CLIENTE:UDP] [ERROR] Falha ao enviar mensagem para o servidor.");
       e.printStackTrace();
@@ -119,19 +132,46 @@ public class ClienteUDP implements Runnable {
    * @param nomeDestinatario Nome do usuario destinatario.
    * @param usuario          Dados do remetente.
    * @param mensagem         Texto da mensagem privada.
+   * @return ID unico gerado para a mensagem (para rastreamento de ticks).
    * @throws exceptions.ConexaoException Caso ocorra erro de envio no socket.
    */
-  public void sendPvt(String nomeDestinatario, InfoUser usuario, String mensagem) throws exceptions.ConexaoException {
+  public String sendPvt(String nomeDestinatario, InfoUser usuario, String mensagem) throws exceptions.ConexaoException {
     APDU apdu = new APDU("SENDPVT", "@" + nomeDestinatario, usuario.getNome(), mensagem, usuario.getPorta(), nomeDestinatario);
     try {
       byte[] dadosEnviados = serializarAPDU(apdu);
       DatagramPacket pacoteEnvio = new DatagramPacket(dadosEnviados, dadosEnviados.length, IP_SERVIDOR, portaServidor);
       socketUDP.send(pacoteEnvio);
-      System.out.println("[CLIENTE:UDP] [INFO] Mensagem privada enviada ao servidor.");
+
+      System.out.println("[CLIENTE:UDP] [INFO] Mensagem privada enviada ao servidor. ID: " + apdu.getIdMensagem());
+      return apdu.getIdMensagem();
     } catch (IOException e) {
       System.out.println("[CLIENTE:UDP] [ERROR] Falha ao enviar mensagem privada.");
       e.printStackTrace();
       throw new exceptions.ConexaoException("Falha ao enviar mensagem privada via UDP", e);
+    }
+  }
+
+  /**
+   * Envia uma APDU de confirmacao (CONFIRM) de recebimento ou leitura para o servidor.
+   * 
+   * @param idMensagem         Identificador unico da mensagem recebida.
+   * @param status             Status da confirmacao (2=Entregue, 3=Lida).
+   * @param nomeGrupoOuDestino Nome do grupo ou "@destinatario".
+   * @param donoDaMensagem     Nome do remetente original da mensagem.
+   */
+  public void sendConfirm(String idMensagem, int status, String nomeGrupoOuDestino, String donoDaMensagem) {
+    if (idMensagem == null || idMensagem.isEmpty()) {
+      return;
+    }
+    String remetenteConfirm = (this.meuNome != null) ? this.meuNome : "Anonimo";
+    APDU confirmApdu = new APDU("CONFIRM", idMensagem, status, remetenteConfirm, nomeGrupoOuDestino, donoDaMensagem);
+    try {
+      byte[] dadosEnviados = serializarAPDU(confirmApdu);
+      DatagramPacket pacoteEnvio = new DatagramPacket(dadosEnviados, dadosEnviados.length, IP_SERVIDOR, portaServidor);
+      socketUDP.send(pacoteEnvio);
+      System.out.println("[CLIENTE:UDP] [INFO] CONFIRM (Status " + status + ") enviado para mensagem: " + idMensagem);
+    } catch (IOException e) {
+      System.err.println("[CLIENTE:UDP] [ERROR] Falha ao enviar CONFIRM: " + e.getMessage());
     }
   }
 
@@ -167,6 +207,15 @@ public class ClienteUDP implements Runnable {
           continue;
         }
 
+        if (utils.Protocolo.CONFIRM.equals(comando)) {
+          System.out.println("[CLIENTE:UDP] [INFO] Confirmacao (tick) recebida para mensagem: " + apdu.getIdMensagem()
+              + " Status: " + apdu.getStatusRecebido());
+          if (listener != null) {
+            listener.onTickReceived(apdu.getIdMensagem(), apdu.getStatusRecebido(), apdu.getNomeUsuario());
+          }
+          continue;
+        }
+
         if (utils.Protocolo.SENDPVT.equals(comando)) {
           String nomeRemetente = apdu.getNomeUsuario();
           if (nomeRemetente != null && nomeRemetente.startsWith("@")) {
@@ -175,14 +224,14 @@ public class ClienteUDP implements Runnable {
           InfoUser remetente = new InfoUser(nomeRemetente, pacoteRecebido.getAddress().getHostAddress(), apdu.getPortaClienteUDP());
           String mensagemPvt = apdu.getTextoMensagem();
           System.out.println("\n[MENSAGEM PRIVADA] " + remetente.getNome() + " diz: " + mensagemPvt);
-          if (listener != null)
-            listener.onMessageReceived(remetente.getNome(), remetente, mensagemPvt, true);
-          continue;
-        }
+          
+          // Auto-ACK de entrega (Status 2: Entregue no dispositivo do cliente)
+          if (apdu.getIdMensagem() != null) {
+            sendConfirm(apdu.getIdMensagem(), 2, "@" + meuNome, remetente.getNome());
+          }
 
-        if (utils.Protocolo.CONFIRM.equals(comando)) {
-          System.out.println("[CLIENTE:UDP] [INFO] Confirmacao (tick) recebida para mensagem: " + apdu.getIdMensagem()
-              + " Status: " + apdu.getStatusRecebido());
+          if (listener != null)
+            listener.onMessageReceived(apdu.getIdMensagem(), remetente.getNome(), remetente, mensagemPvt, true);
           continue;
         }
 
@@ -191,8 +240,14 @@ public class ClienteUDP implements Runnable {
         String grupo = apdu.getNomeGrupo();
         System.out.println("\n[CLIENTE:UDP] [INFO] Nova mensagem recebida no grupo " + grupo + ":\n"
             + usuario.toString() + " enviou: " + mensagem);
+
+        // Auto-ACK de entrega (Status 2: Entregue no dispositivo do cliente)
+        if (apdu.getIdMensagem() != null && mensagem != null && !mensagem.startsWith("~")) {
+          sendConfirm(apdu.getIdMensagem(), 2, grupo, usuario.getNome());
+        }
+
         if (listener != null)
-          listener.onMessageReceived(grupo, usuario, mensagem, false);
+          listener.onMessageReceived(apdu.getIdMensagem(), grupo, usuario, mensagem, false);
 
       } catch (SocketException e) {
         // Excecao esperada no encerramento normal do socket
