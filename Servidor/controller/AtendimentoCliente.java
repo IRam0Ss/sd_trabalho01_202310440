@@ -244,14 +244,18 @@ public class AtendimentoCliente implements Runnable {
 
       case Protocolo.BLOCK:
         String usuarioABloquear = apdu.getDestinatario();
-        System.out.println("[ATENDIMENTO] [INFO] Usuario '" + apdu.getNomeUsuario() + "' bloqueou '" + usuarioABloquear + "'");
-        enviarResposta(Protocolo.OK, "Usuario bloqueado");
+        String bloqueador = apdu.getNomeUsuario();
+        this.gerenciador.bloquear(bloqueador, usuarioABloquear);
+        System.out.println("[ATENDIMENTO] [INFO] Usuario '" + bloqueador + "' bloqueou '" + usuarioABloquear + "'");
+        enviarResposta(Protocolo.OK, "Usuario " + usuarioABloquear + " bloqueado com sucesso");
         break;
 
       case Protocolo.UNBLOCK:
         String usuarioADesbloquear = apdu.getDestinatario();
-        System.out.println("[ATENDIMENTO] [INFO] Usuario '" + apdu.getNomeUsuario() + "' desbloqueou '" + usuarioADesbloquear + "'");
-        enviarResposta(Protocolo.OK, "Usuario desbloqueado");
+        String desbloqueador = apdu.getNomeUsuario();
+        this.gerenciador.desbloquear(desbloqueador, usuarioADesbloquear);
+        System.out.println("[ATENDIMENTO] [INFO] Usuario '" + desbloqueador + "' desbloqueou '" + usuarioADesbloquear + "'");
+        enviarResposta(Protocolo.OK, "Usuario " + usuarioADesbloquear + " desbloqueado com sucesso");
         break;
 
       case Protocolo.SEND:

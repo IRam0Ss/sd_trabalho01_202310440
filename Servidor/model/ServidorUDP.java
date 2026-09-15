@@ -126,8 +126,17 @@ public class ServidorUDP implements Runnable {
 
         for (InfoUser membroDestinatario : destinatarios) {
           try {
+            byte[] dadosParaEnviar;
+            if (gerenciador.isBloqueadoMutuo(usuarioRemetente.getNome(), membroDestinatario.getNome())) {
+              Protocol.APDU apduBloqueada = new Protocol.APDU(comando, nomeGrupo, usuarioRemetente.getNome(), "~BLOCKED~", usuarioRemetente.getPorta(), apdu.isVisualizacaoUnica());
+              dadosParaEnviar = serializarAPDU(apduBloqueada);
+              System.out.println("[SERVIDOR:UDP] [INFO] Mascarando mensagem do grupo '" + nomeGrupo + "' de '" + usuarioRemetente.getNome() + "' para '" + membroDestinatario.getNome() + "' (Bloqueado)");
+            } else {
+              dadosParaEnviar = dadosEnviados;
+            }
+
             InetAddress ipDestinatario = InetAddress.getByName(membroDestinatario.getIp());
-            DatagramPacket pacoteEnvio = new DatagramPacket(dadosEnviados, dadosEnviados.length, ipDestinatario,
+            DatagramPacket pacoteEnvio = new DatagramPacket(dadosParaEnviar, dadosParaEnviar.length, ipDestinatario,
                 membroDestinatario.getPorta());
 
             conexaoUDP.send(pacoteEnvio);
@@ -161,6 +170,20 @@ public class ServidorUDP implements Runnable {
             + nomeDestino + "'");
 
         InfoUser destinoInfo = gerenciador.buscarUsuarioPorNome(nomeDestino);
+
+        if (gerenciador.isBloqueadoMutuo(remetentePvt.getNome(), nomeDestino)) {
+          System.out.println("[SERVIDOR:UDP] [WARNING] SENDPVT bloqueado entre '" + remetentePvt.getNome() + "' e '" + nomeDestino + "'");
+          if (apdu.getIdMensagem() != null) {
+            Protocol.APDU confirmErro = new Protocol.APDU("CONFIRM", apdu.getIdMensagem(), -1, remetentePvt.getNome(), "@" + nomeDestino, remetentePvt.getNome());
+            byte[] dadosConfirm = serializarAPDU(confirmErro);
+            try {
+              DatagramPacket pacoteConfirm = new DatagramPacket(dadosConfirm, dadosConfirm.length, ipRemetente, remetentePvt.getPorta());
+              conexaoUDP.send(pacoteConfirm);
+            } catch (Exception e) {
+            }
+          }
+          break;
+        }
 
         if (destinoInfo != null) {
           try {

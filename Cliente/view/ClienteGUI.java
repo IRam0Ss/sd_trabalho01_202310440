@@ -95,6 +95,7 @@ public class ClienteGUI extends Application implements MessageListener {
   private Map<String, Set<String>> messageDeliveryConfirmations = new HashMap<>();
   private boolean isVuMode = false;
   private Set<String> openedVuMessageIds = new HashSet<>();
+  private Set<String> meusBloqueados = new HashSet<>();
   private ToggleButton btnToggleVURef;
 
   private static class MessageConfirmTask {
@@ -1066,44 +1067,48 @@ public class ClienteGUI extends Application implements MessageListener {
     headerFade.setToValue(1.0);
     headerFade.play();
 
-    if (chatHeaderBox == null) {
-      chatHeaderBox = new HBox(10);
-      chatHeaderBox.setAlignment(Pos.CENTER_LEFT);
-      HBox.setHgrow(lblChatHeader, Priority.ALWAYS);
-      lblChatHeader.setMaxWidth(Double.MAX_VALUE);
-      // The header parent is the first HBox in centerArea, but we only have access to
-      // lblChatHeader.
-      // Wait, we need to rebuild the header or access its parent.
-      // It's easier to just assume lblChatHeader's parent is the header HBox.
-      HBox parentHeader = (HBox) lblChatHeader.getParent();
+    HBox parentHeader = (HBox) lblChatHeader.getParent();
+    if (parentHeader != null) {
       parentHeader.getChildren().clear();
       parentHeader.getChildren().add(lblChatHeader);
+      HBox.setHgrow(lblChatHeader, Priority.ALWAYS);
+      lblChatHeader.setMaxWidth(Double.MAX_VALUE);
 
-      Button btnDetails = new Button("Detalhes");
-      SVGPath menuIcon = new SVGPath();
-      menuIcon.setContent("M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z");
-      menuIcon.setFill(Color.web("#3f4a23"));
-      btnDetails.setGraphic(menuIcon);
-      btnDetails.setStyle(
-          "-fx-background-color: transparent; -fx-text-fill: #3f4a23; -fx-font-size: 12px; -fx-cursor: hand; -fx-border-color: #5b6623; -fx-border-radius: 12px; -fx-padding: 4px 10px;");
-      btnDetails.setOnAction(e -> {
-        if (currentChat != null && !currentChat.startsWith("[PVT] ")) {
-          showGroupDetailsOverlay(currentChat);
-        }
-      });
-      parentHeader.getChildren().add(btnDetails);
-    }
+      if (chatId.startsWith("[PVT] ")) {
+        String targetUser = chatId.substring(6);
+        lblChatHeader.setText("Mensagem Privada: " + targetUser);
 
-    // Enable or disable details button based on if it's a group
-    HBox parentHeader = (HBox) lblChatHeader.getParent();
-    if (parentHeader.getChildren().size() > 1) {
-      parentHeader.getChildren().get(1).setVisible(!chatId.startsWith("[PVT] "));
-    }
+        boolean estaBloqueado = meusBloqueados.contains(targetUser);
+        Button btnBlockAction = new Button(estaBloqueado ? "\u2705 Desbloquear" : "\uD83D\uDEAB Bloquear");
+        btnBlockAction.setStyle(
+            "-fx-background-color: transparent; -fx-text-fill: #3f4a23; -fx-font-size: 12px; -fx-cursor: hand; -fx-border-color: #5b6623; -fx-border-radius: 12px; -fx-padding: 4px 10px; -fx-font-weight: bold;");
 
-    if (chatId.startsWith("[PVT] ")) {
-      lblChatHeader.setText("Mensagem Privada: " + chatId.substring(6));
-    } else {
-      lblChatHeader.setText("Grupo: " + chatId);
+        btnBlockAction.setOnAction(e -> {
+          if (meusBloqueados.contains(targetUser)) {
+            if (tcp != null) tcp.unblock(targetUser, eu);
+            meusBloqueados.remove(targetUser);
+            btnBlockAction.setText("\uD83D\uDEAB Bloquear");
+          } else {
+            if (tcp != null) tcp.block(targetUser, eu);
+            meusBloqueados.add(targetUser);
+            btnBlockAction.setText("\u2705 Desbloquear");
+          }
+        });
+        parentHeader.getChildren().add(btnBlockAction);
+
+      } else {
+        lblChatHeader.setText("Grupo: " + chatId);
+
+        Button btnDetails = new Button("Detalhes");
+        SVGPath menuIcon = new SVGPath();
+        menuIcon.setContent("M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z");
+        menuIcon.setFill(Color.web("#3f4a23"));
+        btnDetails.setGraphic(menuIcon);
+        btnDetails.setStyle(
+            "-fx-background-color: transparent; -fx-text-fill: #3f4a23; -fx-font-size: 12px; -fx-cursor: hand; -fx-border-color: #5b6623; -fx-border-radius: 12px; -fx-padding: 4px 10px;");
+        btnDetails.setOnAction(e -> showGroupDetailsOverlay(chatId));
+        parentHeader.getChildren().add(btnDetails);
+      }
     }
 
     // Buscar ou criar historico
@@ -1139,6 +1144,10 @@ public class ClienteGUI extends Application implements MessageListener {
       boolean sentAsVu = isVuMode;
       if (currentChat.startsWith("[PVT] ")) {
         String destino = currentChat.substring(6);
+        if (meusBloqueados.contains(destino)) {
+          showErrorOverlay("Usuario Bloqueado", "Voce bloqueou este usuario. Desbloqueie-o para poder enviar mensagens.");
+          return;
+        }
         if (sentAsVu) {
           idMensagem = udp.sendPvtVu(destino, eu, msg);
         } else {
@@ -1284,7 +1293,12 @@ public class ClienteGUI extends Application implements MessageListener {
 
         bubbleContainer.setAlignment(Pos.CENTER_LEFT);
 
-        if (isVisualizacaoUnica) {
+        if (meusBloqueados.contains(senderName) || "~BLOCKED~".equals(text)) {
+          Label lblBlocked = new Label("\uD83D\uDEAB [Mensagem de usuario bloqueado]");
+          lblBlocked.setFont(Font.font("Segoe UI", 12));
+          lblBlocked.setStyle("-fx-text-fill: #555555; -fx-font-style: italic;");
+          bubble.getChildren().addAll(header, lblBlocked, metaBox);
+        } else if (isVisualizacaoUnica) {
           if (idMensagem != null && openedVuMessageIds.contains(idMensagem)) {
             Label lblExpired = new Label("\uD83D\uDD12 Mensagem de Visualizacao Unica Expirada");
             lblExpired.setFont(Font.font("Segoe UI", 12));

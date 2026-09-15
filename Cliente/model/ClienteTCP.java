@@ -213,6 +213,32 @@ public class ClienteTCP {
   }
 
   /**
+   * Envia requisicao BLOCK para bloquear um usuario.
+   * 
+   * @param usuarioDestino Nome do usuario a ser bloqueado.
+   * @param usuario        Dados do usuario solicitante.
+   * @return APDU de resposta.
+   */
+  public synchronized APDU block(String usuarioDestino, InfoUser usuario) {
+    APDU apdu = new APDU("BLOCK", null, usuario.getNome(), null, usuario.getPorta(), usuarioDestino);
+    System.out.println("[CLIENTE:TCP] [INFO] BLOCK enviado ao servidor para: " + usuarioDestino);
+    return executarComando(apdu);
+  }
+
+  /**
+   * Envia requisicao UNBLOCK para desbloquear um usuario.
+   * 
+   * @param usuarioDestino Nome do usuario a ser desbloqueado.
+   * @param usuario        Dados do usuario solicitante.
+   * @return APDU de resposta.
+   */
+  public synchronized APDU unblock(String usuarioDestino, InfoUser usuario) {
+    APDU apdu = new APDU("UNBLOCK", null, usuario.getNome(), null, usuario.getPorta(), usuarioDestino);
+    System.out.println("[CLIENTE:TCP] [INFO] UNBLOCK enviado ao servidor para: " + usuarioDestino);
+    return executarComando(apdu);
+  }
+
+  /**
    * Encerra o socket e os fluxos de objetos da conexao TCP.
    */
   public void fecharConexao() {

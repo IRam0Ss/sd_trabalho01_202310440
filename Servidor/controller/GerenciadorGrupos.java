@@ -32,6 +32,7 @@ public class GerenciadorGrupos {
 
   private Map<String, List<InfoUser>> gruposExistentes;
   private java.util.Set<InfoUser> todosUsuariosAtivos;
+  private Map<String, java.util.Set<String>> tabelaBloqueios;
 
   /**
    * Construtor padrao. Inicializa a estrutura de dados.
@@ -39,6 +40,7 @@ public class GerenciadorGrupos {
   public GerenciadorGrupos() {
     gruposExistentes = new HashMap<>();
     todosUsuariosAtivos = new java.util.HashSet<>();
+    tabelaBloqueios = new HashMap<>();
   }
   
   private byte[] serializarAPDU(Protocol.APDU apdu) {
@@ -321,6 +323,43 @@ public class GerenciadorGrupos {
         System.err.println("[GERENCIADOR] [ERROR] Falha ao notificar mensagem de sistema: " + e.getMessage());
       }
     }).start();
+  }
+
+  /**
+   * Adiciona um bloqueio de usuario (bloqueador bloqueia bloqueado).
+   */
+  public synchronized boolean bloquear(String bloqueador, String bloqueado) {
+    if (bloqueador == null || bloqueado == null || bloqueador.equalsIgnoreCase(bloqueado)) {
+      return false;
+    }
+    tabelaBloqueios.computeIfAbsent(bloqueador, k -> new java.util.HashSet<>()).add(bloqueado);
+    System.out.println("[GERENCIADOR] [INFO] Bloqueio registrado: '" + bloqueador + "' -> '" + bloqueado + "'");
+    return true;
+  }
+
+  /**
+   * Remove um bloqueio de usuario (bloqueador desbloqueia bloqueado).
+   */
+  public synchronized boolean desbloquear(String bloqueador, String bloqueado) {
+    if (bloqueador == null || bloqueado == null) {
+      return false;
+    }
+    if (tabelaBloqueios.containsKey(bloqueador)) {
+      tabelaBloqueios.get(bloqueador).remove(bloqueado);
+      System.out.println("[GERENCIADOR] [INFO] Bloqueio removido: '" + bloqueador + "' -> '" + bloqueado + "'");
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Verifica se ha um bloqueio mutuo entre dois usuarios (u1 bloqueou u2 OU u2 bloqueou u1).
+   */
+  public synchronized boolean isBloqueadoMutuo(String u1, String u2) {
+    if (u1 == null || u2 == null) return false;
+    boolean u1BloqueouU2 = tabelaBloqueios.containsKey(u1) && tabelaBloqueios.get(u1).contains(u2);
+    boolean u2BloqueouU1 = tabelaBloqueios.containsKey(u2) && tabelaBloqueios.get(u2).contains(u1);
+    return u1BloqueouU2 || u2BloqueouU1;
   }
 
 }// fim da class

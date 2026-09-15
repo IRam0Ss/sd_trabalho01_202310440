@@ -3,6 +3,12 @@
     "configurations": [
       {
         "type": "java",
+        "name": "TesteSendVUGroup",
+        "request": "launch",
+        "mainClass": "TesteSendVUGroup"
+      },
+      {
+        "type": "java",
         "name": "TesteConfirmTicks",
         "request": "launch",
         "mainClass": "TesteConfirmTicks",
