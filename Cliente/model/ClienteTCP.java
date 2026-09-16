@@ -37,7 +37,7 @@ public class ClienteTCP {
   private Socket conexaoTCP;
   private ObjectOutputStream saidaObjetos;
   private ObjectInputStream entradaObjetos;
-  private InfoUser usuario;
+
 
   /**
    * Construtor que inicializa a conexao TCP com o servidor e os fluxos de objetos.
@@ -77,14 +77,7 @@ public class ClienteTCP {
     }
   }
 
-  /**
-   * Define o usuario associado a esta conexao de cliente.
-   * 
-   * @param usuario Objeto InfoUser com os dados do cliente local.
-   */
-  public void setUsuario(InfoUser usuario) {
-    this.usuario = usuario;
-  }
+
 
   /**
    * Realiza a leitura e conversao polimorfica da resposta do servidor.
@@ -99,16 +92,27 @@ public class ClienteTCP {
     if (obj instanceof APDU) {
       return (APDU) obj;
     } else if (obj instanceof String) {
-      String str = (String) obj;
-      if (str.startsWith("OK:") || str.startsWith("OK")) {
-        String msg = str.startsWith("OK:") ? str.substring(3).trim() : (str.length() > 2 ? str.substring(2).trim() : "");
-        return new APDU(Protocolo.OK, null, null, msg, 0);
-      } else if (str.startsWith("ERRO:") || str.startsWith("ERRO")) {
-        String msg = str.startsWith("ERRO:") ? str.substring(5).trim() : (str.length() > 4 ? str.substring(4).trim() : "");
-        return new APDU(Protocolo.ERRO, null, null, msg, 0);
-      } else {
-        return new APDU(Protocolo.OK, null, null, str, 0);
+      String str = ((String) obj).trim();
+      String operacao = Protocolo.OK;
+      String msg = str;
+
+      if (str.startsWith("OK")) {
+        operacao = Protocolo.OK;
+        msg = str.substring(2).trim();
+      } else if (str.startsWith("ERRO")) {
+        operacao = Protocolo.ERRO;
+        msg = str.substring(4).trim();
       }
+
+      while (msg.startsWith(":") || msg.startsWith("/") || msg.startsWith("~") || msg.startsWith("-") || msg.startsWith(" ")) {
+        if (msg.startsWith("~/")) {
+          msg = msg.substring(2).trim();
+        } else {
+          msg = msg.substring(1).trim();
+        }
+      }
+
+      return new APDU(operacao, null, null, msg, 0);
     }
     return new APDU(Protocolo.ERRO, null, null, "Resposta de tipo desconhecido: " + obj, 0);
   }

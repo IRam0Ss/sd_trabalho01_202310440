@@ -79,7 +79,6 @@ public class ClienteGUI extends Application implements MessageListener {
   private Label lblChatHeader;
   private ListView<String> groupList;
   private ListView<String> onlineUsersList;
-  private HBox chatHeaderBox; // to hold details button
   private VBox emptyStateBox;
 
   private ObservableList<String> masterGroupData = FXCollections.observableArrayList();
@@ -666,7 +665,6 @@ public class ClienteGUI extends Application implements MessageListener {
       masterGroupData.clear();
       masterUsersData.clear();
       currentChat = null;
-      chatHeaderBox = null;
       watermark.setOpacity(0.18); // restore watermark opacity
       watermark.setVisible(true); // make sure it's visible again
       switchView(createSplash());
@@ -932,6 +930,7 @@ public class ClienteGUI extends Application implements MessageListener {
       chatHistories.remove(selected);
       unreadCounts.remove(selected);
       knownGroupMembers.remove(selected);
+      unreadMessageIds.remove(selected);
       if (!masterGroupData.isEmpty()) {
         groupList.getSelectionModel().selectFirst();
       } else {
@@ -1832,6 +1831,13 @@ public class ClienteGUI extends Application implements MessageListener {
     });
   }
 
+  private String normalizarNomeUser(String nome) {
+    if (nome == null) return "";
+    String n = nome.trim();
+    if (n.startsWith("@")) n = n.substring(1).trim();
+    return n.toLowerCase();
+  }
+
   @Override
   public void onTickReceived(String idMensagem, int status, String nomeConfirmou) {
     Platform.runLater(() -> {
@@ -1860,50 +1866,28 @@ public class ClienteGUI extends Application implements MessageListener {
           lblTick.setStyle("-fx-text-fill: #00f0ff; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.9), 8, 0.6, 0, 0);"); // Lido pelo destinatario (Ciano Neon Glow)
         }
       } else {
-        // Chat de Grupo: Requer que TODOS os membros (exceto eu) vejam a mensagem para marcar como LIDA (Status 3)
+        // Chat de Grupo: Compativel tanto com controle de contagem no cliente quanto com confirmacao enviada pelo servidor
         Set<String> readUsers = messageReadConfirmations.computeIfAbsent(idMensagem, k -> new HashSet<>());
         Set<String> deliveredUsers = messageDeliveryConfirmations.computeIfAbsent(idMensagem, k -> new HashSet<>());
 
         if (nomeConfirmou != null && !nomeConfirmou.isEmpty()) {
-          if (status == 2)
-            deliveredUsers.add(nomeConfirmou);
-          if (status == 3) {
-            deliveredUsers.add(nomeConfirmou);
-            readUsers.add(nomeConfirmou);
+          String normConfirm = normalizarNomeUser(nomeConfirmou);
+          if (!normConfirm.isEmpty()) {
+            if (status == 2)
+              deliveredUsers.add(normConfirm);
+            if (status == 3) {
+              deliveredUsers.add(normConfirm);
+              readUsers.add(normConfirm);
+            }
           }
         }
 
-        // Determina lista de outros membros do grupo
-        Set<String> expectedMembers = new HashSet<>();
-        if (knownGroupMembers.containsKey(chatId)) {
-          expectedMembers.addAll(knownGroupMembers.get(chatId));
-        }
-        expectedMembers.remove(eu.getNome()); // Remove a si mesmo
-
-        // Se a lista local estiver vazia ou desatualizada, tenta consultar via TCP
-        if (expectedMembers.isEmpty() && tcp != null) {
-          final String gId = chatId;
-          new Thread(() -> {
-            APDU resp = tcp.listMembers(gId);
-            if (resp != null && Protocolo.OK.equals(resp.getOperacao())) {
-              String data = resp.getTextoMensagem();
-              if (data != null && !data.isEmpty()) {
-                Set<String> mSet = new HashSet<>();
-                for (String m : data.split(",")) {
-                  String nameStr = m.trim();
-                  if (!nameStr.equalsIgnoreCase(eu.getNome())) {
-                    mSet.add(nameStr);
-                  }
-                }
-                Platform.runLater(() -> {
-                  knownGroupMembers.put(gId, mSet);
-                  atualizarTickGrupo(lblTick, readUsers, deliveredUsers, mSet);
-                });
-              }
-            }
-          }).start();
-        } else {
-          atualizarTickGrupo(lblTick, readUsers, deliveredUsers, expectedMembers);
+        if (status == 3) {
+          lblTick.setText(" \u2713\u2713");
+          lblTick.setStyle("-fx-text-fill: #00f0ff; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.9), 8, 0.6, 0, 0);"); // Lido / Visto (Ciano Neon Glow)
+        } else if (status == 2) {
+          lblTick.setText(" \u2713\u2713");
+          lblTick.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold;"); // Entregue ao grupo (Branco Puro)
         }
       }
     });

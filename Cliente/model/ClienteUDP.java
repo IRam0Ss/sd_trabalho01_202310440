@@ -262,7 +262,11 @@ public class ClienteUDP implements Runnable {
           System.out.println("[CLIENTE:UDP] [INFO] Confirmacao (tick) recebida para mensagem: " + apdu.getIdMensagem()
               + " Status: " + apdu.getStatusRecebido());
           if (listener != null) {
-            listener.onTickReceived(apdu.getIdMensagem(), apdu.getStatusRecebido(), apdu.getNomeUsuario());
+            String confirmador = apdu.getNomeUsuario();
+            if (confirmador == null || confirmador.trim().isEmpty()) {
+              confirmador = apdu.getDestinatario();
+            }
+            listener.onTickReceived(apdu.getIdMensagem(), apdu.getStatusRecebido(), confirmador);
           }
           continue;
         }

@@ -27,7 +27,6 @@ import Protocol.APDU;
  * @version 2.0
  * @since 15/06/2026
  */
-@SuppressWarnings("unused")
 public class GerenciadorGrupos {
 
   private Map<String, List<InfoUser>> gruposExistentes;

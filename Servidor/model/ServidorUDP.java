@@ -101,7 +101,6 @@ public class ServidorUDP implements Runnable {
    * @param apdu        Objeto APDU recebido.
    * @param ipRemetente Endereco IP de origem do pacote.
    */
-  @SuppressWarnings("unused")
   private void processarAPDU(DatagramSocket conexaoUDP, Protocol.APDU apdu, java.net.InetAddress ipRemetente) {
 
     String comando = apdu.getOperacao();

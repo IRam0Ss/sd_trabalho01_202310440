@@ -13,7 +13,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.EOFException;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
 import Protocol.APDU;
 import utils.InfoUser;
@@ -21,8 +20,7 @@ import utils.Protocolo;
 
 /**
  * Classe responsavel por atender clientes individuais via conexao TCP concorrente.
- * Cada conexao de cliente executa em uma thread independente, processando objetos {@link APDU}
- * e retornando respostas em formato String padronizado ("OK: ..." ou "ERRO: ...").
+ * Cada conexao de cliente executa em uma thread independente, processando objetos {@link APDU}.
  * 
  * @author Iury Ramos Sodre (Matricula: 202310440)
  * @version 2.0
@@ -33,7 +31,6 @@ public class AtendimentoCliente implements Runnable {
   private Socket conexao;
   private GerenciadorGrupos gerenciador;
   private InfoUser usuarioAssociado = null;
-  private List<String> gruposAssociados = new ArrayList<>();
   private ObjectOutputStream saidaObjetos;
 
   /**
@@ -144,9 +141,6 @@ public class AtendimentoCliente implements Runnable {
 
         boolean checkJoin = this.gerenciador.join(grupoJoin, usuarioJoin);
         if (checkJoin) {
-          if (!this.gruposAssociados.contains(grupoJoin)) {
-            this.gruposAssociados.add(grupoJoin);
-          }
           enviarResposta(Protocolo.OK, "Entrou no grupo " + grupoJoin);
           System.out.println(
               "[ATENDIMENTO] [INFO] Processamento de JOIN de '" + usuarioJoin.getNome() + "' concluido.");
@@ -183,7 +177,6 @@ public class AtendimentoCliente implements Runnable {
         if (grupoLeave != null && !grupoLeave.equalsIgnoreCase("GLOBAL")) {
           boolean checkLeave = this.gerenciador.leave(grupoLeave, usuarioLeave);
           if (checkLeave) {
-            this.gruposAssociados.remove(grupoLeave);
             enviarResposta(Protocolo.OK, "Saiu do grupo " + grupoLeave);
             System.out.println("[ATENDIMENTO] [INFO] Processamento de LEAVE de '" + usuarioLeave.getNome()
                 + "' concluido.");
@@ -256,10 +249,6 @@ public class AtendimentoCliente implements Runnable {
         this.gerenciador.desbloquear(desbloqueador, usuarioADesbloquear);
         System.out.println("[ATENDIMENTO] [INFO] Usuario '" + desbloqueador + "' desbloqueou '" + usuarioADesbloquear + "'");
         enviarResposta(Protocolo.OK, "Usuario " + usuarioADesbloquear + " desbloqueado com sucesso");
-        break;
-
-      case Protocolo.SEND:
-        System.out.println("[ATENDIMENTO] [WARNING] APDU SEND recebida via TCP (ignorando).");
         break;
 
       default:
