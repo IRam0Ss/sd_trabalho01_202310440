@@ -686,19 +686,7 @@ public class ClienteGUI extends Application implements MessageListener {
     btnDesconectar.setMaxWidth(Double.MAX_VALUE);
     addHoverScale(btnDesconectar);
     btnDesconectar.setOnAction(e -> {
-      if (tcp != null)
-        tcp.fecharConexao();
-      if (udp != null)
-        udp.fecharConexao();
-      tcp = null;
-      udp = null;
-      eu = null;
-      chatHistories.clear();
-      unreadCounts.clear();
-      knownGroupMembers.clear();
-      masterGroupData.clear();
-      masterUsersData.clear();
-      currentChat = null;
+      desconectarLimpo();
       watermark.setOpacity(0.18); // restore watermark opacity
       watermark.setVisible(true); // make sure it's visible again
       switchView(createSplash());
@@ -827,31 +815,35 @@ public class ClienteGUI extends Application implements MessageListener {
       steps.add(new TutorialOverlay.TutorialStep(
           sidebar,
           "Diretrizes do Jardim",
-          "Bem-vindo ao E.D.E.N.. Esta e a sua interface de comunicacao secreta. Siga este breve tutorial para entender as funcionalidades principais e se familiarizar com a sua estacao de trabalho."));
+          "Bem-vindo ao E.D.E.N.. Esta e a sua estacao de comunicacao segura. Siga estas diretrizes para se familiarizar com os recursos avancados do sistema."));
       steps.add(new TutorialOverlay.TutorialStep(
           groupList,
-          "Seus Grupos",
-          "Nesta area ficam os grupos que voce participa. O E.D.E.N. organiza as comunicacoes em salas protegidas para que possamos coordenar nossas acoes de maneira isolada."));
+          "Salas e Grupos Protegidos",
+          "Aqui ficam os grupos dos quais voce faz parte. As comunicacoes em grupo sao distribuidas em tempo real para todos os membros autorizados."));
       steps.add(new TutorialOverlay.TutorialStep(
           grpBtns,
-          "Acoes de Grupos",
-          "Use estes botoes para 'Criar' ou 'Entrar' em novos grupos, ou para 'Sair' de um grupo que voce nao precisa mais acompanhar."));
+          "Gerenciamento de Grupos",
+          "Use '+ Criar/Entrar' para abrir uma nova sala ou ingressar em uma existente, e '- Sair' para se desligar do grupo selecionado."));
       steps.add(new TutorialOverlay.TutorialStep(
           grpBtns2,
-          "Lista Global",
-          "Este botao solicita ao servidor a lista completa de todos os grupos ativos no momento. Util para descobrir novas frentes de acao."));
+          "Frequencias Ativas (Lista Global)",
+          "Solicita ao servidor a listagem completa de todas as salas ativas na rede para que voce possa ingressar em novas operacoes."));
       steps.add(new TutorialOverlay.TutorialStep(
           onlineUsersList,
-          "Agentes Online",
-          "Esta area exibe todos os outros clientes (agentes) atualmente conectados ao servidor. Voce pode clicar em um nome para iniciar um canal de comunicacao direta e privada (PVT)."));
+          "Agentes Online & Canais Privados",
+          "Exibe todos os agentes conectados. Clique em qualquer agente para abrir uma frequencia de transmissao privada e direta (PVT)."));
       steps.add(new TutorialOverlay.TutorialStep(
-          boxUsersHeader,
-          "Busca de Agentes e Grupos",
-          "Clicando no icone de lupa ao lado dos titulos, voce pode pesquisar e filtrar rapidamente por um agente ou grupo especifico nas listas."));
+          header,
+          "Controles de Canal, Bloqueio e Detalhes",
+          "No topo da conversa, você encontra acoes especiais: em chats privados, use '\u2298 Bloquear' para restringir comunicacoes mutuas; em grupos, use 'Detalhes' para inspecionar os membros da sala."));
+      steps.add(new TutorialOverlay.TutorialStep(
+          btnToggleVU,
+          "Transmissao Classificada (Modo VU)",
+          "Ative o botao '\uD83D\uDD12 VU' para enviar mensagens de Visualizacao Unica. O conteudo so podera ser lido uma unica vez por cada destinatario em um pop-up protegido que expira permanentemente."));
       steps.add(new TutorialOverlay.TutorialStep(
           inputBar,
-          "Transmissao",
-          "Esta e a sua barra de transmissao. Digite suas mensagens aqui e envie para o grupo ou agente que estiver selecionado. A comunicacao aqui e vital."));
+          "Barra de Transmissao & Ticks em Tempo Real",
+          "Digite suas mensagens aqui. Suas transmissoes contam com rastreamento: \uD83D\uDD52 (Enviando), \u2713 (Servidor), \u2713\u2713 Lima (Entregue), \u2713\u2713 Verde Neon (Lido por todos) e \u2715 (Erro/Bloqueio)."));
 
       TutorialOverlay overlay = new TutorialOverlay(root, steps);
       overlay.start();
@@ -1280,12 +1272,12 @@ public class ClienteGUI extends Application implements MessageListener {
 
       Label nameLbl = new Label(senderName);
       nameLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
-      nameLbl.setTextFill(Color.web("#3f4a23"));
+      nameLbl.setTextFill(Color.web("#c9d873"));
 
       String timestamp = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
       Label timeLbl = new Label(timestamp);
       timeLbl.setFont(Font.font("Consolas", 10));
-      timeLbl.setStyle("-fx-text-fill: #a0b050;");
+      timeLbl.setStyle("-fx-text-fill: #a4b455;");
 
       HBox metaBox = new HBox(3);
       metaBox.setAlignment(Pos.CENTER_RIGHT);
@@ -1299,9 +1291,9 @@ public class ClienteGUI extends Application implements MessageListener {
           lblVU.setStyle("-fx-text-fill: #8a9b3a; -fx-font-weight: bold;");
           metaBox.getChildren().add(lblVU);
         }
-        Label lblTick = new Label(" \u2713");
-        lblTick.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
-        lblTick.setStyle("-fx-text-fill: #6b7b4a; -fx-font-weight: bold;");
+        Label lblTick = new Label(" \uD83D\uDD52"); // 🕒 Relógio: Enviando / aguardando servidor
+        lblTick.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
+        lblTick.setStyle("-fx-text-fill: #8a9b3a;");
         if (idMensagem != null) {
           messageTickLabels.put(idMensagem, lblTick);
         }
@@ -1906,12 +1898,15 @@ public class ClienteGUI extends Application implements MessageListener {
 
       if (isPrivate || chatId == null) {
         // Chat Privado (1 para 1): Transicao direta
-        if (status == 2) {
+        if (status == 1) {
+          lblTick.setText(" \u2713");
+          lblTick.setStyle("-fx-text-fill: #8a9b3a; -fx-font-weight: bold;"); // Chegou ao servidor
+        } else if (status == 2) {
           lblTick.setText(" \u2713\u2713");
           lblTick.setStyle("-fx-text-fill: #c9d873; -fx-font-weight: bold;"); // Entregue ao dispositivo (Lima EDEN)
         } else if (status == 3) {
           lblTick.setText(" \u2713\u2713");
-          lblTick.setStyle("-fx-text-fill: #00f0ff; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.5), 4, 0.3, 0, 0);"); // Lido pelo destinatario (Ciano Neon Suave)
+          lblTick.setStyle("-fx-text-fill: #00ff66; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,255,102,0.7), 6, 0.5, 0, 0);"); // Lido pelo destinatario (Verde Neon)
         }
       } else {
         // Chat de Grupo: Compativel tanto com controle de contagem no cliente quanto com confirmacao enviada pelo servidor
@@ -1932,10 +1927,13 @@ public class ClienteGUI extends Application implements MessageListener {
 
         if (status == 3) {
           lblTick.setText(" \u2713\u2713");
-          lblTick.setStyle("-fx-text-fill: #00f0ff; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.5), 4, 0.3, 0, 0);"); // Lido / Visto (Ciano Neon Suave)
+          lblTick.setStyle("-fx-text-fill: #00ff66; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,255,102,0.7), 6, 0.5, 0, 0);"); // Lido / Visto (Verde Neon)
         } else if (status == 2) {
           lblTick.setText(" \u2713\u2713");
           lblTick.setStyle("-fx-text-fill: #c9d873; -fx-font-weight: bold;"); // Entregue ao grupo (Lima EDEN)
+        } else if (status == 1) {
+          lblTick.setText(" \u2713");
+          lblTick.setStyle("-fx-text-fill: #8a9b3a; -fx-font-weight: bold;"); // Chegou ao servidor
         }
       }
     });
@@ -1947,19 +1945,42 @@ public class ClienteGUI extends Application implements MessageListener {
 
     if (todosLeram) {
       lblTick.setText(" \u2713\u2713");
-      lblTick.setStyle("-fx-text-fill: #00f0ff; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.5), 4, 0.3, 0, 0);"); // Lido por TODOS (Ciano Neon Suave)
+      lblTick.setStyle("-fx-text-fill: #00ff66; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,255,102,0.7), 6, 0.5, 0, 0);"); // Lido por TODOS (Verde Neon)
     } else if (algumEntregue) {
       lblTick.setText(" \u2713\u2713");
       lblTick.setStyle("-fx-text-fill: #c9d873; -fx-font-weight: bold;"); // Entregue ao grupo (Lima EDEN)
     }
   }
 
-  @Override
-  public void stop() {
+  private void desconectarLimpo() {
+    // Sair explicitamente de todos os grupos para evitar membros fantasmas nos servidores dos colegas
+    if (masterGroupData != null && !masterGroupData.isEmpty() && tcp != null && eu != null) {
+      List<String> gruposAtuais = new ArrayList<>(masterGroupData);
+      for (String grupo : gruposAtuais) {
+        try {
+          tcp.leave(grupo, eu);
+        } catch (Exception ignored) {
+        }
+      }
+    }
     if (tcp != null)
       tcp.fecharConexao();
     if (udp != null)
       udp.fecharConexao();
+    tcp = null;
+    udp = null;
+    eu = null;
+    chatHistories.clear();
+    unreadCounts.clear();
+    knownGroupMembers.clear();
+    masterGroupData.clear();
+    masterUsersData.clear();
+    currentChat = null;
+  }
+
+  @Override
+  public void stop() {
+    desconectarLimpo();
     System.exit(0);
   }
 }

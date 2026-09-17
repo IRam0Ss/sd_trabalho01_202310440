@@ -67,15 +67,14 @@ public class TutorialOverlay extends Pane {
     overlayPath.setFillRule(FillRule.EVEN_ODD);
     overlayPath.setStroke(Color.TRANSPARENT);
 
-    balloon = new VBox(15);
+    balloon = new VBox(12);
     balloon.setStyle(
-        "-fx-background-color: linear-gradient(to bottom right, rgba(229, 232, 215, 0.95), rgba(200, 210, 180, 0.95)); "
-            +
-            "-fx-border-color: #8a9b3a; -fx-border-width: 2px; " +
-            "-fx-background-radius: 12px; -fx-border-radius: 12px; " +
-            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 15, 0, 0, 8);");
-    balloon.setPadding(new Insets(20));
-    balloon.setMaxWidth(350);
+        "-fx-background-color: #232d0f; "
+            + "-fx-border-color: #8a9b3a; -fx-border-width: 2px; "
+            + "-fx-background-radius: 14px; -fx-border-radius: 14px; "
+            + "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 18, 0, 0, 8);");
+    balloon.setPadding(new Insets(18, 22, 18, 22));
+    balloon.setMaxWidth(380);
 
     getChildren().addAll(overlayPath, balloon);
 
@@ -142,34 +141,45 @@ public class TutorialOverlay extends Pane {
     // Atualiza o texto do balao
     balloon.getChildren().clear();
 
+    Label lblStepCounter = new Label("DIRETRIZ " + (currentStepIndex + 1) + " / " + steps.size());
+    lblStepCounter.setFont(Font.font("Consolas", FontWeight.BOLD, 10));
+    lblStepCounter.setTextFill(Color.web("#8a9b3a"));
+
     Label lblTitle = new Label(step.title);
-    lblTitle.setFont(Font.font("Impact", FontWeight.NORMAL, 18));
-    lblTitle.setTextFill(Color.web("#3f4a23"));
+    lblTitle.setFont(Font.font("Impact", FontWeight.NORMAL, 20));
+    lblTitle.setTextFill(Color.web("#c9d873"));
     lblTitle.setWrapText(true);
 
     Text txtDesc = new Text(step.description);
     txtDesc.setFont(Font.font("Consolas", 13));
-    txtDesc.setFill(Color.web("#1a1e0b"));
-    txtDesc.setWrappingWidth(310);
+    txtDesc.setFill(Color.web("#e5e8d7"));
+    txtDesc.setWrappingWidth(340);
 
     HBox buttonBox = new HBox(10);
     buttonBox.setAlignment(Pos.CENTER_RIGHT);
 
-    Button btnSkip = new Button("Pular");
+    Button btnSkip = new Button("Pular Tutorial");
     btnSkip.setStyle(
-        "-fx-background-color: transparent; -fx-text-fill: #5b6623; -fx-cursor: hand; -fx-font-family: 'Consolas'; -fx-font-weight: bold;");
+        "-fx-background-color: transparent; -fx-text-fill: #8a9b3a; -fx-cursor: hand; -fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-font-weight: bold;");
     btnSkip.setOnAction(e -> end());
 
-    Button btnNext = new Button(currentStepIndex == steps.size() - 1 ? "Concluir" : "Proximo ->");
+    Button btnNext = new Button(currentStepIndex == steps.size() - 1 ? "\u2713 Concluir" : "Proximo \u2192");
     btnNext.setStyle(
-        "-fx-background-color: linear-gradient(to bottom, #4f5a2d, #3f4a23); -fx-text-fill: #d8e87d; -fx-padding: 8px 15px; -fx-background-radius: 20px; -fx-border-color: #5b6623; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-cursor: hand; -fx-font-family: 'Consolas'; -fx-font-weight: bold;");
+        "-fx-background-color: linear-gradient(to bottom, #8a9b3a, #5b6623); -fx-text-fill: #e5e8d7; -fx-padding: 7px 16px; -fx-background-radius: 20px; -fx-border-color: #3f4a23; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-cursor: hand; -fx-font-family: 'Consolas'; -fx-font-weight: bold; -fx-font-size: 12px;");
     btnNext.setOnAction(e -> {
       currentStepIndex++;
       updateOverlay();
     });
 
     buttonBox.getChildren().addAll(btnSkip, btnNext);
-    balloon.getChildren().addAll(lblTitle, txtDesc, buttonBox);
+    balloon.getChildren().addAll(lblStepCounter, lblTitle, txtDesc, buttonBox);
+
+    // Animacao suave de fade ao trocar de etapa
+    balloon.setOpacity(0.0);
+    javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(180), balloon);
+    ft.setFromValue(0.0);
+    ft.setToValue(1.0);
+    ft.play();
 
     // Posiciona o balao na tela perto do buraco
     balloon.applyCss();
