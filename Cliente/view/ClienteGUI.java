@@ -112,7 +112,7 @@ public class ClienteGUI extends Application implements MessageListener {
   @Override
   public void start(Stage primaryStage) {
     root = new StackPane();
-    root.setStyle("-fx-background-color: #e5e8d7;");
+    root.setStyle("-fx-background-color: #1a1e0b;");
 
     Scene scene = new Scene(root, 950, 650);
 
@@ -155,17 +155,24 @@ public class ClienteGUI extends Application implements MessageListener {
   // =========================================================================
   private void switchView(Node newView) {
     Node oldView = root.getChildren().get(root.getChildren().size() - 1);
-    FadeTransition fadeOut = new FadeTransition(Duration.millis(250), oldView);
+    FadeTransition fadeOut = new FadeTransition(Duration.millis(200), oldView);
     fadeOut.setFromValue(1.0);
     fadeOut.setToValue(0.0);
     fadeOut.setOnFinished(e -> {
       root.getChildren().remove(oldView);
       newView.setOpacity(0.0);
+      newView.setTranslateY(12);
       root.getChildren().add(newView);
-      FadeTransition fadeIn = new FadeTransition(Duration.millis(350), newView);
+
+      FadeTransition fadeIn = new FadeTransition(Duration.millis(300), newView);
       fadeIn.setFromValue(0.0);
       fadeIn.setToValue(1.0);
+
+      TranslateTransition slideIn = new TranslateTransition(Duration.millis(300), newView);
       fadeIn.play();
+      slideIn.setFromY(12);
+      slideIn.setToY(0);
+      slideIn.play();
     });
     fadeOut.play();
   }
@@ -190,34 +197,50 @@ public class ClienteGUI extends Application implements MessageListener {
   // TELA 1 - SPLASH (Login & Server Connect)
   // =========================================================================
   private Node createSplash() {
-    VBox splash = new VBox(25);
+    VBox splash = new VBox(22);
     splash.setAlignment(Pos.CENTER);
     splash.setStyle("-fx-background-color: transparent;");
 
+    Label lblClearance = new Label("[ TERMINAL DE ACESSO RESTRITO ]");
+    lblClearance.setFont(Font.font("Consolas", FontWeight.BOLD, 12));
+    lblClearance.setTextFill(Color.web("#8a9b3a"));
+    lblClearance.setStyle("-fx-background-color: rgba(46,58,20,0.5); -fx-padding: 4px 14px; -fx-background-radius: 12px; -fx-border-color: #5b6623; -fx-border-radius: 12px; -fx-border-width: 1px;");
+
     Label title1 = new Label("Sistema de Comunicacao Interno");
     title1.setFont(Font.font("Impact", FontWeight.BOLD, 26));
-    title1.setTextFill(Color.web("#5b6623"));
+    title1.setTextFill(Color.web("#a4b455"));
     title1.setTextAlignment(TextAlignment.CENTER);
 
     Label titleDa = new Label("da");
     titleDa.setFont(Font.font("Impact", FontWeight.NORMAL, 20));
-    titleDa.setTextFill(Color.web("#5b6623"));
+    titleDa.setTextFill(Color.web("#8a9b3a"));
 
     Label title2 = new Label("E.D.E.N.");
-    title2.setFont(Font.font("Impact", FontWeight.BOLD, 72));
-    title2.setTextFill(Color.web("#3f4a23"));
+    title2.setFont(Font.font("Impact", FontWeight.BOLD, 74));
+    title2.setTextFill(Color.web("#c9d873"));
+    title2.setStyle("-fx-effect: dropshadow(gaussian, rgba(138,155,58,0.55), 20, 0.4, 0, 0);");
+
+    VBox titleBox = new VBox(4);
+    titleBox.setAlignment(Pos.CENTER);
+    titleBox.getChildren().addAll(lblClearance, title1, titleDa, title2);
 
     Button btnEntrar = new Button("Entrar");
     btnEntrar.getStyleClass().add("btn-eden");
+    btnEntrar.setPrefWidth(200);
     btnEntrar.setOnAction(e -> switchView(createLogin()));
     addHoverScale(btnEntrar);
 
     Button btnSobre = new Button("Sobre");
     btnSobre.getStyleClass().add("btn-eden");
+    btnSobre.setPrefWidth(200);
     btnSobre.setOnAction(e -> switchView(createSobre()));
     addHoverScale(btnSobre);
 
-    splash.getChildren().addAll(title1, titleDa, title2, btnEntrar, btnSobre);
+    VBox buttonBox = new VBox(12);
+    buttonBox.setAlignment(Pos.CENTER);
+    buttonBox.getChildren().addAll(btnEntrar, btnSobre);
+
+    splash.getChildren().addAll(titleBox, buttonBox);
     return splash;
   }
 
@@ -228,43 +251,44 @@ public class ClienteGUI extends Application implements MessageListener {
 
     Label title = new Label("E.D.E.N.");
     title.setFont(Font.font("Impact", FontWeight.BOLD, 48));
-    title.setTextFill(Color.web("#3f4a23"));
-    title.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 4);");
+    title.setTextFill(Color.web("#c9d873"));
+    title.setStyle("-fx-effect: dropshadow(gaussian, rgba(138,155,58,0.5), 15, 0.4, 0, 0);");
 
     VBox contentBox = new VBox(20);
     contentBox.setAlignment(Pos.CENTER);
     contentBox.setMaxWidth(650);
     contentBox.setStyle(
-        "-fx-background-color: linear-gradient(to bottom right, rgba(229, 232, 215, 0.9), rgba(200, 210, 180, 0.8)); -fx-padding: 30px; -fx-background-radius: 15px; -fx-border-color: #8a9b3a; -fx-border-width: 2px; -fx-border-radius: 15px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.25), 15, 0, 0, 8);");
+        "-fx-background-color: #232d0f; -fx-padding: 30px; -fx-background-radius: 15px; -fx-border-color: #8a9b3a; -fx-border-width: 2px; -fx-border-radius: 15px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 18, 0, 0, 8);");
 
     Label text = new Label(
         "Seja bem-vindo ao sistema de comunica\u00E7\u00E3o interna do E.D.E.N.. Se voc\u00EA est\u00E1 acessando esta interface, sua transi\u00E7\u00E3o foi conclu\u00EDda: a partir de agora, voc\u00EA faz parte do Jardim, e suas vidas nunca mais ser\u00E3o as mesmas. O E.D.E.N. \u00E9 o presente, o passado e o pr\u00F3prio futuro; n\u00F3s somos a raiz invis\u00EDvel que sustenta o novo amanhecer, e hoje voc\u00EA se torna um membro valioso desta funda\u00E7\u00E3o. Deixamos para tr\u00E1s o que era velho, quebrado e sem prop\u00F3sito para trabalharmos juntos na verdadeira transforma\u00E7\u00E3o do mundo. Saiba que voc\u00EA n\u00E3o est\u00E1 aqui por acaso; voc\u00EA foi cirurgicamente escolhido, e o Conselho est\u00E1 de olho em cada uma de suas a\u00E7\u00F5es. Use este canal interno com absoluta disciplina para coordenar suas diretrizes entre os outros agentes do Jardim. Lembre-se diariamente da import\u00E2ncia do seu papel nesta engrenagem: n\u00F3s somos o amanh\u00E3 constru\u00EDdo hoje. N\u00F3s somos o futuro.");
     text.setWrapText(true);
     text.setTextAlignment(TextAlignment.JUSTIFY);
     text.setFont(Font.font("Consolas", 14));
-    text.setTextFill(Color.web("#1a1e0b"));
+    text.setTextFill(Color.web("#e5e8d7"));
 
     Separator sep = new Separator();
-    sep.setStyle("-fx-background-color: #8a9b3a; -fx-opacity: 0.5;");
+    sep.setStyle("-fx-background-color: #5b6623; -fx-opacity: 0.6;");
 
     Label readme = new Label(
         "--- TECH README ---\nDesenvolvedor: Iury Ramos Sodre (202310440)\nProjeto: App de Chat P2P/Server Hibrido\nDisciplina: Sistemas Distribuidos (UESB)\nProtocolos: TCP (Controle) / UDP (Mensagens)\nInterface: JavaFX (Custom UI)\nAno: 2026");
     readme.setFont(Font.font("Consolas", FontWeight.BOLD, 13));
-    readme.setTextFill(Color.web("#3f4a23"));
+    readme.setTextFill(Color.web("#c9d873"));
     readme.setAlignment(Pos.CENTER);
     readme.setTextAlignment(TextAlignment.CENTER);
     readme.setMaxWidth(Double.MAX_VALUE);
 
     contentBox.getChildren().addAll(text, sep, readme);
 
-    Label techFooter = new Label("v1.0 | Build 2026");
+    Label techFooter = new Label("v1.0 | Build 2026 // CLASSIFIED ACCESS");
     techFooter.setTextAlignment(TextAlignment.CENTER);
-    techFooter.setFont(Font.font("Segoe UI", 12));
-    techFooter.setTextFill(Color.web("#5b6623"));
+    techFooter.setFont(Font.font("Consolas", 12));
+    techFooter.setTextFill(Color.web("#8a9b3a"));
 
-    Button btnVoltar = new Button("<- Voltar");
+    Button btnVoltar = new Button("\u2190 Voltar");
     btnVoltar.getStyleClass().add("btn-eden");
     btnVoltar.setOnAction(e -> switchView(createSplash()));
+    addHoverScale(btnVoltar);
 
     sobre.getChildren().addAll(title, contentBox, techFooter, btnVoltar);
 
@@ -282,25 +306,26 @@ public class ClienteGUI extends Application implements MessageListener {
     login.setAlignment(Pos.CENTER);
     login.setStyle("-fx-background-color: transparent;");
 
-    Label title = new Label("Login");
-    title.setFont(Font.font("Impact", FontWeight.BOLD, 40));
-    title.setTextFill(Color.web("#5b6623"));
+    Label title = new Label("Identificacao de Agente");
+    title.setFont(Font.font("Impact", FontWeight.BOLD, 36));
+    title.setTextFill(Color.web("#c9d873"));
+    title.setStyle("-fx-effect: dropshadow(gaussian, rgba(138,155,58,0.5), 15, 0.4, 0, 0);");
 
     // Avatar circle
     StackPane avatarContainer = new StackPane();
-    Circle outerCircle = new Circle(80, Color.web("#b8c464"));
+    Circle outerCircle = new Circle(75, Color.web("#232d0f"));
     outerCircle.setStroke(Color.web("#8a9b3a"));
-    outerCircle.setStrokeWidth(3);
-    Circle innerCircle = new Circle(55, Color.web("#a0b050"));
+    outerCircle.setStrokeWidth(2.5);
+    Circle innerCircle = new Circle(52, Color.web("#2e3a14"));
 
     // Simple user icon with circles
-    Circle head = new Circle(20, Color.web("#c9d873"));
-    head.setTranslateY(-15);
-    Circle body = new Circle(30, Color.web("#c9d873"));
-    body.setTranslateY(25);
+    Circle head = new Circle(18, Color.web("#c9d873"));
+    head.setTranslateY(-14);
+    Circle body = new Circle(28, Color.web("#c9d873"));
+    body.setTranslateY(24);
 
     avatarContainer.getChildren().addAll(outerCircle, innerCircle, head, body);
-    avatarContainer.setMaxSize(160, 160);
+    avatarContainer.setMaxSize(150, 150);
 
     // Verifica se o IP foi passado por parametro no console
     String defaultIp = "127.0.0.1";
@@ -313,11 +338,12 @@ public class ClienteGUI extends Application implements MessageListener {
     txtIpServidor.setPrefWidth(220);
     txtIpServidor.getStyleClass().add("text-input");
     txtIpServidor.setStyle(
-        "-fx-background-color: rgba(160,176,80,0.35); -fx-background-radius: 20px; -fx-padding: 12px 20px; -fx-font-size: 14px;");
+        "-fx-background-color: rgba(35, 48, 15, 0.8); -fx-text-fill: #e5e8d7; -fx-prompt-text-fill: #8a9b3a; -fx-background-radius: 20px; -fx-border-color: #5b6623; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-padding: 11px 18px; -fx-font-size: 14px;");
 
     Button btnDiscover = new Button("Buscar");
     btnDiscover.getStyleClass().add("btn-eden");
-    btnDiscover.setStyle("-fx-padding: 10px 15px; -fx-font-size: 13px;");
+    btnDiscover.setStyle("-fx-padding: 10px 16px; -fx-font-size: 12px;");
+    addHoverScale(btnDiscover);
     btnDiscover.setOnAction(e -> {
       btnDiscover.setText("Buscando...");
       btnDiscover.setDisable(true);
@@ -377,14 +403,16 @@ public class ClienteGUI extends Application implements MessageListener {
     ipBox.getChildren().addAll(txtIpServidor, btnDiscover);
 
     TextField txtUsername = new TextField();
-    txtUsername.setPromptText("Digite seu Username");
-    txtUsername.setMaxWidth(320);
+    txtUsername.setPromptText("Digite seu Codinome de Agente");
+    txtUsername.setMaxWidth(330);
     txtUsername.getStyleClass().add("text-input");
     txtUsername.setStyle(
-        "-fx-background-color: rgba(160,176,80,0.35); -fx-background-radius: 20px; -fx-padding: 12px 20px; -fx-font-size: 14px;");
+        "-fx-background-color: rgba(35, 48, 15, 0.8); -fx-text-fill: #e5e8d7; -fx-prompt-text-fill: #8a9b3a; -fx-background-radius: 20px; -fx-border-color: #5b6623; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-padding: 11px 18px; -fx-font-size: 14px;");
 
-    Button btnConfirmar = new Button("Confirmar");
+    Button btnConfirmar = new Button("Conectar ao Jardim");
     btnConfirmar.getStyleClass().add("btn-eden");
+    btnConfirmar.setPrefWidth(220);
+    addHoverScale(btnConfirmar);
     btnConfirmar.setOnAction(e -> {
       String nome = txtUsername.getText();
       String ip = txtIpServidor.getText();
@@ -394,21 +422,27 @@ public class ClienteGUI extends Application implements MessageListener {
       }
     });
 
+    Button btnVoltar = new Button("\u2190 Voltar");
+    btnVoltar.setStyle(
+        "-fx-background-color: transparent; -fx-text-fill: #8a9b3a; -fx-font-size: 12px; -fx-cursor: hand; -fx-padding: 4px 12px;");
+    btnVoltar.setOnAction(e -> switchView(createSplash()));
+    addHoverScale(btnVoltar);
+
     // Enter key support
     txtUsername.setOnAction(e -> btnConfirmar.fire());
     txtIpServidor.setOnAction(e -> txtUsername.requestFocus());
 
-    login.getChildren().addAll(title, avatarContainer, ipBox, txtUsername, btnConfirmar);
+    login.getChildren().addAll(title, avatarContainer, ipBox, txtUsername, btnConfirmar, btnVoltar);
     return login;
   }
 
   private void tentarLogin(String nome) {
     // Mostra feedback visual imediato
-    Label lblConectando = new Label("Conectando ao servidor...");
-    lblConectando.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
-    lblConectando.setTextFill(Color.web("#3f4a23"));
+    Label lblConectando = new Label("[ CONECTANDO AO SERVIDOR ]");
+    lblConectando.setFont(Font.font("Consolas", FontWeight.BOLD, 13));
+    lblConectando.setTextFill(Color.web("#c9d873"));
     lblConectando.setStyle(
-        "-fx-background-color: rgba(160,176,80,0.7); -fx-padding: 12px 24px; -fx-background-radius: 12px;");
+        "-fx-background-color: #232d0f; -fx-border-color: #8a9b3a; -fx-border-width: 1.5px; -fx-padding: 12px 24px; -fx-background-radius: 12px; -fx-border-radius: 12px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 4);");
     StackPane.setAlignment(lblConectando, Pos.BOTTOM_CENTER);
     StackPane.setMargin(lblConectando, new Insets(0, 0, 30, 0));
     root.getChildren().add(lblConectando);
@@ -468,7 +502,7 @@ public class ClienteGUI extends Application implements MessageListener {
     VBox sidebar = new VBox(8);
     sidebar.setPrefWidth(260);
     sidebar.setPadding(new Insets(12));
-    sidebar.setStyle("-fx-background-color: #b8c464; -fx-background-radius: 0;");
+    sidebar.setStyle("-fx-background-color: #2e3a14; -fx-background-radius: 0;");
 
     FilteredList<String> filteredGroups = new FilteredList<>(masterGroupData, p -> true);
     FilteredList<String> filteredUsers = new FilteredList<>(masterUsersData, p -> true);
@@ -479,7 +513,7 @@ public class ClienteGUI extends Application implements MessageListener {
 
     Label lblGrupos = new Label("GRUPOS");
     lblGrupos.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
-    lblGrupos.setTextFill(Color.web("#3f4a23"));
+    lblGrupos.setTextFill(Color.web("#c9d873"));
     lblGrupos.setPadding(new Insets(5, 0, 5, 5));
     HBox.setHgrow(lblGrupos, Priority.ALWAYS);
     lblGrupos.setMaxWidth(Double.MAX_VALUE);
@@ -543,7 +577,7 @@ public class ClienteGUI extends Application implements MessageListener {
 
     Button btnLeave = new Button("- Sair");
     btnLeave.setStyle(
-        "-fx-background-color: linear-gradient(to bottom, #d4b06a, #c4a05a); -fx-text-fill: #3c3010; -fx-font-size: 11px; -fx-padding: 5px 12px; -fx-background-radius: 20px; -fx-border-color: #a88940; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-cursor: hand; -fx-font-weight: bold;");
+        "-fx-background-color: rgba(120, 35, 35, 0.80); -fx-text-fill: #e5c0c0; -fx-font-size: 11px; -fx-padding: 5px 12px; -fx-background-radius: 20px; -fx-border-color: #7a2828; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-cursor: hand; -fx-font-weight: bold;");
     btnLeave.setOnAction(e -> onLeaveGroup());
     addHoverScale(btnLeave);
 
@@ -569,7 +603,7 @@ public class ClienteGUI extends Application implements MessageListener {
 
     Label lblUsers = new Label("USUARIOS ONLINE");
     lblUsers.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
-    lblUsers.setTextFill(Color.web("#3f4a23"));
+    lblUsers.setTextFill(Color.web("#c9d873"));
     lblUsers.setPadding(new Insets(5, 0, 5, 5));
     HBox.setHgrow(lblUsers, Priority.ALWAYS);
     lblUsers.setMaxWidth(Double.MAX_VALUE);
@@ -643,12 +677,12 @@ public class ClienteGUI extends Application implements MessageListener {
 
     Label lblStatus = new Label("Conectado a " + ipServidor);
     lblStatus.setFont(Font.font("Segoe UI", 11));
-    lblStatus.setTextFill(Color.web("#3f4a23"));
+    lblStatus.setTextFill(Color.web("#8a9b3a"));
     statusBox.getChildren().addAll(statusDot, lblStatus);
 
-    Button btnDesconectar = new Button("<- Desconectar");
+    Button btnDesconectar = new Button("\u2190 Desconectar");
     btnDesconectar.setStyle(
-        "-fx-background-color: linear-gradient(to bottom, #d4b06a, #c4a05a); -fx-text-fill: #3c3010; -fx-font-size: 11px; -fx-padding: 6px 12px; -fx-background-radius: 20px; -fx-border-color: #a88940; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-cursor: hand; -fx-font-weight: bold;");
+        "-fx-background-color: rgba(120, 35, 35, 0.80); -fx-text-fill: #e5c0c0; -fx-font-size: 11px; -fx-padding: 6px 12px; -fx-background-radius: 20px; -fx-border-color: #7a2828; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-cursor: hand; -fx-font-weight: bold;");
     btnDesconectar.setMaxWidth(Double.MAX_VALUE);
     addHoverScale(btnDesconectar);
     btnDesconectar.setOnAction(e -> {
@@ -670,9 +704,9 @@ public class ClienteGUI extends Application implements MessageListener {
       switchView(createSplash());
     });
 
-    Button btnTutorial = new Button("? Iniciar Tutorial");
+    Button btnTutorial = new Button("\u2753 Iniciar Tutorial");
     btnTutorial.setStyle(
-        "-fx-background-color: linear-gradient(to bottom, #a4b455, #8a9b3a); -fx-text-fill: #1a1e0b; -fx-font-size: 11px; -fx-padding: 6px 12px; -fx-background-radius: 20px; -fx-cursor: hand; -fx-font-weight: bold; -fx-border-color: #5b6623; -fx-border-radius: 20px; -fx-border-width: 1px;");
+        "-fx-background-color: rgba(70, 90, 25, 0.55); -fx-text-fill: #c9d873; -fx-font-size: 11px; -fx-padding: 6px 12px; -fx-background-radius: 20px; -fx-cursor: hand; -fx-font-weight: bold; -fx-border-color: #5b6623; -fx-border-radius: 20px; -fx-border-width: 1px;");
     btnTutorial.setMaxWidth(Double.MAX_VALUE);
     addHoverScale(btnTutorial);
 
@@ -693,11 +727,11 @@ public class ClienteGUI extends Application implements MessageListener {
     HBox header = new HBox(10);
     header.setAlignment(Pos.CENTER_LEFT);
     header.setPadding(new Insets(12, 15, 12, 15));
-    header.setStyle("-fx-background-color: #a4b455;");
+    header.setStyle("-fx-background-color: #1e2a0e; -fx-border-color: transparent transparent #5b6623 transparent; -fx-border-width: 0 0 2px 0;");
 
     lblChatHeader = new Label("Selecione um grupo ou usuario");
     lblChatHeader.setFont(Font.font("Segoe UI", FontWeight.BOLD, 16));
-    lblChatHeader.setTextFill(Color.web("#1a1e0b"));
+    lblChatHeader.setTextFill(Color.web("#c9d873"));
 
     header.getChildren().add(lblChatHeader);
 
@@ -713,10 +747,15 @@ public class ClienteGUI extends Application implements MessageListener {
     emptyStateBox.setAlignment(Pos.CENTER);
     emptyStateBox.setMouseTransparent(true);
 
-    Label lblEmpty = new Label("Selecione um canal seguro para iniciar a transmissao...");
-    lblEmpty.setFont(Font.font("Consolas", 14));
+    Label lblEmptyTitle = new Label("CANAL INATIVO");
+    lblEmptyTitle.setFont(Font.font("Impact", FontWeight.BOLD, 22));
+    lblEmptyTitle.setTextFill(Color.web("#3f4a23"));
+
+    Label lblEmpty = new Label("Selecione um canal seguro\npara iniciar a transmissao...");
+    lblEmpty.setFont(Font.font("Consolas", 13));
     lblEmpty.setTextFill(Color.web("#8a9b3a"));
-    emptyStateBox.getChildren().add(lblEmpty);
+    lblEmpty.setTextAlignment(TextAlignment.CENTER);
+    emptyStateBox.getChildren().addAll(lblEmptyTitle, lblEmpty);
 
     StackPane chatContainer = new StackPane();
 
@@ -740,7 +779,7 @@ public class ClienteGUI extends Application implements MessageListener {
     HBox inputBar = new HBox(10);
     inputBar.setAlignment(Pos.CENTER);
     inputBar.setPadding(new Insets(10, 15, 10, 15));
-    inputBar.setStyle("-fx-background-color: #8a9b3a;");
+    inputBar.setStyle("-fx-background-color: #1e2a0e;");
 
     TextField txtMsg = new TextField();
     txtMsg.setPromptText("Digite sua mensagem");
@@ -757,18 +796,18 @@ public class ClienteGUI extends Application implements MessageListener {
         "-fx-background-color: linear-gradient(to bottom, #4f5a2d, #3f4a23); -fx-text-fill: #d8e87d; -fx-background-radius: 20px; -fx-border-color: #5b6623; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-padding: 10px 20px; -fx-font-size: 13px; -fx-font-weight: bold; -fx-cursor: hand;");
     addHoverScale(btnSend);
 
-    ToggleButton btnToggleVU = new ToggleButton("\uD83D\uDC41 VU");
+    ToggleButton btnToggleVU = new ToggleButton("\uD83D\uDD12 VU");
     btnToggleVU.setTooltip(new Tooltip("Visualizacao Unica (Mensagem Temporaria)"));
     btnToggleVU.setStyle(
-        "-fx-background-color: transparent; -fx-text-fill: #d8e87d; -fx-border-color: #d8e87d; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;");
+        "-fx-background-color: transparent; -fx-text-fill: #c9d873; -fx-border-color: #5b6623; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;");
     btnToggleVU.setOnAction(e -> {
       isVuMode = btnToggleVU.isSelected();
       if (isVuMode) {
         btnToggleVU.setStyle(
-            "-fx-background-color: #00f0ff; -fx-text-fill: #1a1e0b; -fx-border-color: #00f0ff; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.8), 6, 0.5, 0, 0);");
+            "-fx-background-color: #8a9b3a; -fx-text-fill: #1a1e0b; -fx-border-color: #c9d873; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(138,155,58,0.7), 6, 0.4, 0, 0);");
       } else {
         btnToggleVU.setStyle(
-            "-fx-background-color: transparent; -fx-text-fill: #d8e87d; -fx-border-color: #d8e87d; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;");
+            "-fx-background-color: transparent; -fx-text-fill: #c9d873; -fx-border-color: #5b6623; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;");
       }
     });
     this.btnToggleVURef = btnToggleVU;
@@ -843,22 +882,18 @@ public class ClienteGUI extends Application implements MessageListener {
 
           Label nameLbl = new Label(item);
           nameLbl.setFont(Font.font("Segoe UI", 13));
-          nameLbl.setTextFill(Color.web("#1a1e0b"));
+          nameLbl.setTextFill(Color.web("#d8e87d"));
           HBox.setHgrow(nameLbl, Priority.ALWAYS);
           nameLbl.setMaxWidth(Double.MAX_VALUE);
 
           row.getChildren().add(nameLbl);
 
-          // if this cell is used for users list, mapKey in unreadCounts might be "[PVT]
-          // item"
-          // we need a way to know if this is from groupList or onlineUsersList
-          // We can just check both: item or "[PVT] " + item
           int unread = unreadCounts.getOrDefault(item, unreadCounts.getOrDefault("[PVT] " + item, 0));
 
           if (unread > 0) {
             Label badge = new Label(String.valueOf(unread));
             badge.setStyle(
-                "-fx-background-color: #8a9b3a; -fx-text-fill: #e5e8d7; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 1px 5px; -fx-background-radius: 10px;");
+                "-fx-background-color: #c9d873; -fx-text-fill: #1a1e0b; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 1px 6px; -fx-background-radius: 10px;");
             row.getChildren().add(badge);
           }
 
@@ -866,12 +901,15 @@ public class ClienteGUI extends Application implements MessageListener {
 
           Runnable updateStyle = () -> {
             if (isSelected()) {
+              nameLbl.setTextFill(Color.web("#1a1e0b"));
               setStyle(
-                  "-fx-background-color: #d1e27a; -fx-background-radius: 8px; -fx-padding: 8px 12px;");
+                  "-fx-background-color: #c9d873; -fx-background-radius: 8px; -fx-padding: 8px 12px;");
             } else if (isHover()) {
+              nameLbl.setTextFill(Color.web("#e5e8d7"));
               setStyle(
-                  "-fx-background-color: rgba(209, 226, 122, 0.4); -fx-background-radius: 8px; -fx-padding: 8px 12px; -fx-cursor: hand;");
+                  "-fx-background-color: rgba(91, 102, 35, 0.45); -fx-background-radius: 8px; -fx-padding: 8px 12px; -fx-cursor: hand;");
             } else {
+              nameLbl.setTextFill(Color.web("#d8e87d"));
               setStyle("-fx-background-color: transparent; -fx-padding: 8px 12px; -fx-cursor: hand;");
             }
           };
@@ -1078,19 +1116,22 @@ public class ClienteGUI extends Application implements MessageListener {
         lblChatHeader.setText("Mensagem Privada: " + targetUser);
 
         boolean estaBloqueado = meusBloqueados.contains(targetUser);
-        Button btnBlockAction = new Button(estaBloqueado ? "\u2705 Desbloquear" : "\uD83D\uDEAB Bloquear");
-        btnBlockAction.setStyle(
-            "-fx-background-color: transparent; -fx-text-fill: #3f4a23; -fx-font-size: 12px; -fx-cursor: hand; -fx-border-color: #5b6623; -fx-border-radius: 12px; -fx-padding: 4px 10px; -fx-font-weight: bold;");
+        Button btnBlockAction = new Button(estaBloqueado ? "\u2298 Desbloquear" : "\u2298 Bloquear");
+        btnBlockAction.setStyle(estaBloqueado
+            ? "-fx-background-color: rgba(160, 100, 20, 0.30); -fx-text-fill: #d4b06a; -fx-border-color: #d4b06a; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-font-size: 11px; -fx-padding: 4px 10px; -fx-cursor: hand; -fx-font-weight: bold;"
+            : "-fx-background-color: transparent; -fx-text-fill: #c9d873; -fx-border-color: #5b6623; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-font-size: 11px; -fx-padding: 4px 10px; -fx-cursor: hand; -fx-font-weight: bold;");
 
         btnBlockAction.setOnAction(e -> {
           if (meusBloqueados.contains(targetUser)) {
             if (tcp != null) tcp.unblock(targetUser, eu);
             meusBloqueados.remove(targetUser);
-            btnBlockAction.setText("\uD83D\uDEAB Bloquear");
+            btnBlockAction.setText("\u2298 Bloquear");
+            btnBlockAction.setStyle("-fx-background-color: transparent; -fx-text-fill: #c9d873; -fx-border-color: #5b6623; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-font-size: 11px; -fx-padding: 4px 10px; -fx-cursor: hand; -fx-font-weight: bold;");
           } else {
             if (tcp != null) tcp.block(targetUser, eu);
             meusBloqueados.add(targetUser);
-            btnBlockAction.setText("\u2705 Desbloquear");
+            btnBlockAction.setText("\u2298 Desbloquear");
+            btnBlockAction.setStyle("-fx-background-color: rgba(160, 100, 20, 0.30); -fx-text-fill: #d4b06a; -fx-border-color: #d4b06a; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-font-size: 11px; -fx-padding: 4px 10px; -fx-cursor: hand; -fx-font-weight: bold;");
           }
         });
         parentHeader.getChildren().add(btnBlockAction);
@@ -1101,10 +1142,10 @@ public class ClienteGUI extends Application implements MessageListener {
         Button btnDetails = new Button("Detalhes");
         SVGPath menuIcon = new SVGPath();
         menuIcon.setContent("M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z");
-        menuIcon.setFill(Color.web("#3f4a23"));
+        menuIcon.setFill(Color.web("#c9d873"));
         btnDetails.setGraphic(menuIcon);
         btnDetails.setStyle(
-            "-fx-background-color: transparent; -fx-text-fill: #3f4a23; -fx-font-size: 12px; -fx-cursor: hand; -fx-border-color: #5b6623; -fx-border-radius: 12px; -fx-padding: 4px 10px;");
+            "-fx-background-color: transparent; -fx-text-fill: #c9d873; -fx-font-size: 12px; -fx-cursor: hand; -fx-border-color: #5b6623; -fx-border-radius: 12px; -fx-padding: 4px 10px;");
         btnDetails.setOnAction(e -> showGroupDetailsOverlay(chatId));
         parentHeader.getChildren().add(btnDetails);
       }
@@ -1173,7 +1214,7 @@ public class ClienteGUI extends Application implements MessageListener {
         isVuMode = false;
         btnToggleVURef.setSelected(false);
         btnToggleVURef.setStyle(
-            "-fx-background-color: transparent; -fx-text-fill: #d8e87d; -fx-border-color: #d8e87d; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;");
+            "-fx-background-color: transparent; -fx-text-fill: #c9d873; -fx-border-color: #5b6623; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 12px; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand;");
       }
     } catch (exceptions.ConexaoException e) {
       showErrorOverlay("Erro de Envio", "Falha ao enviar mensagem: " + e.getMessage());
@@ -1253,14 +1294,14 @@ public class ClienteGUI extends Application implements MessageListener {
 
       if (sentByMe) {
         if (isVisualizacaoUnica) {
-          Label lblVU = new Label(" \uD83D\uDC41 VU ");
+          Label lblVU = new Label(" \uD83D\uDD12 VU ");
           lblVU.setFont(Font.font("Segoe UI", FontWeight.BOLD, 10));
-          lblVU.setStyle("-fx-text-fill: #00f0ff; -fx-font-weight: bold;");
+          lblVU.setStyle("-fx-text-fill: #8a9b3a; -fx-font-weight: bold;");
           metaBox.getChildren().add(lblVU);
         }
         Label lblTick = new Label(" \u2713");
         lblTick.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
-        lblTick.setStyle("-fx-text-fill: #8899a6; -fx-font-weight: bold;");
+        lblTick.setStyle("-fx-text-fill: #6b7b4a; -fx-font-weight: bold;");
         if (idMensagem != null) {
           messageTickLabels.put(idMensagem, lblTick);
         }
@@ -1272,7 +1313,7 @@ public class ClienteGUI extends Application implements MessageListener {
 
       if (sentByMe) {
         bubble.setStyle(
-            "-fx-background-color: rgba(60, 72, 22, 0.95); -fx-background-radius: 15px 0px 15px 15px; -fx-border-color: #c9d873; -fx-border-width: 0 2px 0 0; -fx-border-radius: 15px 0px 15px 15px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 4, 0, -2, 2);");
+            "-fx-background-color: rgba(45, 58, 12, 0.98); -fx-background-radius: 15px 3px 15px 15px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.22), 5, 0, -2, 2);");
 
         Label lblMsg = new Label(isVisualizacaoUnica ? ("\uD83D\uDD12 " + text + " [VU]") : text);
         lblMsg.setWrapText(true);
@@ -1284,30 +1325,30 @@ public class ClienteGUI extends Application implements MessageListener {
       } else {
         header.getChildren().addAll(avatarStack, nameLbl);
         bubble.setStyle(
-            "-fx-background-color: rgba(130, 148, 84, 0.95); -fx-background-radius: 0px 15px 15px 15px; -fx-border-color: #5b6623; -fx-border-width: 0 0 0 2px; -fx-border-radius: 0px 15px 15px 15px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 4, 0, 2, 2);");
+            "-fx-background-color: rgba(62, 80, 22, 0.95); -fx-background-radius: 3px 15px 15px 15px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 5, 0, 2, 2);");
         if (isPrivate) {
           bubble.setStyle(
-              "-fx-background-color: rgba(122, 143, 74, 0.95); -fx-background-radius: 0px 15px 15px 15px; -fx-border-color: #c9d873; -fx-border-width: 1.5px; -fx-border-radius: 0px 15px 15px 15px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 4, 0, 2, 2);");
+              "-fx-background-color: rgba(55, 72, 18, 0.97); -fx-background-radius: 3px 15px 15px 15px; -fx-border-color: #8a9b3a; -fx-border-width: 1.5px; -fx-border-radius: 3px 15px 15px 15px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 5, 0, 2, 2);");
         }
 
         bubbleContainer.setAlignment(Pos.CENTER_LEFT);
 
         if (meusBloqueados.contains(senderName) || "~BLOCKED~".equals(text)) {
-          Label lblBlocked = new Label("\uD83D\uDEAB [Mensagem de usuario bloqueado]");
+          Label lblBlocked = new Label("\u2298 [Mensagem de usuario bloqueado]");
           lblBlocked.setFont(Font.font("Segoe UI", 12));
-          lblBlocked.setStyle("-fx-text-fill: #555555; -fx-font-style: italic;");
+          lblBlocked.setStyle("-fx-text-fill: #6b7b4a; -fx-font-style: italic;");
           bubble.getChildren().addAll(header, lblBlocked, metaBox);
         } else if (isVisualizacaoUnica) {
           if (idMensagem != null && openedVuMessageIds.contains(idMensagem)) {
-            Label lblExpired = new Label("\uD83D\uDD12 Mensagem de Visualizacao Unica Expirada");
+            Label lblExpired = new Label("\uD83D\uDD12 Transmissao Classificada Expirada");
             lblExpired.setFont(Font.font("Segoe UI", 12));
-            lblExpired.setStyle("-fx-text-fill: #555555; -fx-font-style: italic;");
+            lblExpired.setStyle("-fx-text-fill: #6b7b4a; -fx-font-style: italic;");
             bubble.getChildren().addAll(header, lblExpired, metaBox);
           } else {
-            Button btnOpenVU = new Button("\uD83D\uDC41 Abrir Mensagem (1 Visualizacao)");
+            Button btnOpenVU = new Button("\uD83D\uDD12 Abrir Transmissao Classificada (1x)");
             btnOpenVU.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
             btnOpenVU.setStyle(
-                "-fx-background-color: #1a2214; -fx-text-fill: #00f0ff; -fx-border-color: #00f0ff; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 6px 12px; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.4), 4, 0, 0, 0);");
+                "-fx-background-color: rgba(40, 55, 12, 0.9); -fx-text-fill: #c9d873; -fx-border-color: #8a9b3a; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 6px 12px; -fx-cursor: hand;");
             btnOpenVU.setOnAction(e -> showVuModalOverlay(idMensagem, senderName, text, chatId, isPrivate, btnOpenVU));
             bubble.getChildren().addAll(header, btnOpenVU, metaBox);
           }
@@ -1315,7 +1356,7 @@ public class ClienteGUI extends Application implements MessageListener {
           Label lblMsg = new Label(text);
           lblMsg.setWrapText(true);
           lblMsg.setFont(Font.font("Segoe UI", 13));
-          lblMsg.setStyle("-fx-text-fill: #1a1e0b;");
+          lblMsg.setStyle("-fx-text-fill: #d8e87d;");
           bubble.getChildren().addAll(header, lblMsg, metaBox);
         }
       }
@@ -1348,7 +1389,7 @@ public class ClienteGUI extends Application implements MessageListener {
 
   private void showVuModalOverlay(String idMensagem, String senderName, String secretText, String chatId, boolean isPrivate, Button btnOpenVU) {
     StackPane overlay = new StackPane();
-    overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.75);");
+    overlay.setStyle("-fx-background-color: rgba(15, 20, 5, 0.82);");
     overlay.setPadding(new Insets(20));
 
     VBox modalCard = new VBox(15);
@@ -1356,29 +1397,36 @@ public class ClienteGUI extends Application implements MessageListener {
     modalCard.setPadding(new Insets(25));
     modalCard.setAlignment(Pos.CENTER);
     modalCard.setStyle(
-        "-fx-background-color: #1a2214; -fx-border-color: #00f0ff; -fx-border-width: 2px; -fx-border-radius: 15px; -fx-background-radius: 15px; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.4), 15, 0, 0, 0);");
+        "-fx-background-color: #232d0f; -fx-border-color: #8a9b3a; -fx-border-width: 2px; -fx-border-radius: 14px; -fx-background-radius: 14px; -fx-effect: dropshadow(gaussian, rgba(60,80,20,0.7), 16, 0, 0, 0);");
 
-    Label title = new Label("\uD83D\uDD12 Mensagem de Visualizacao Unica");
-    title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 16));
-    title.setTextFill(Color.web("#00f0ff"));
+    Label title = new Label("\uD83D\uDD12 Transmissao Classificada — Acesso Unico");
+    title.setFont(Font.font("Impact", FontWeight.BOLD, 16));
+    title.setTextFill(Color.web("#c9d873"));
+    title.setTextAlignment(TextAlignment.CENTER);
+    title.setWrapText(true);
 
-    Label subtitle = new Label("Enviado por: " + senderName);
-    subtitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 12));
-    subtitle.setTextFill(Color.web("#a0b050"));
+    Label subtitle = new Label("Agente: " + senderName);
+    subtitle.setFont(Font.font("Consolas", FontWeight.NORMAL, 12));
+    subtitle.setTextFill(Color.web("#8a9b3a"));
+
+    Separator divider = new Separator();
+    divider.setStyle("-fx-background-color: #5b6623; -fx-opacity: 0.6;");
 
     Label content = new Label(secretText);
     content.setWrapText(true);
     content.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
-    content.setTextFill(Color.web("#ffffff"));
-    content.setStyle("-fx-background-color: rgba(255,255,255,0.1); -fx-padding: 15px; -fx-background-radius: 10px;");
+    content.setTextFill(Color.web("#e5e8d7"));
+    content.setStyle("-fx-background-color: rgba(50,68,15,0.7); -fx-padding: 15px; -fx-background-radius: 10px;");
 
-    Label warning = new Label("Esta mensagem ira expirar permanentemente assim que voce fechar este pop-up!");
-    warning.setFont(Font.font("Segoe UI", 11));
-    warning.setTextFill(Color.web("#ffaa00"));
+    Label warning = new Label("[ ATENCAO ] Esta transmissao expira permanentemente ao fechar este painel.");
+    warning.setFont(Font.font("Consolas", 11));
+    warning.setTextFill(Color.web("#d4a82a"));
+    warning.setWrapText(true);
+    warning.setTextAlignment(TextAlignment.CENTER);
 
-    Button btnClose = new Button("Fechar e Expirar Mensagem");
+    Button btnClose = new Button("\u2713 Confirmar Leitura e Encerrar");
     btnClose.setStyle(
-        "-fx-background-color: linear-gradient(to bottom, #00f0ff, #00a8cc); -fx-text-fill: #1a1e0b; -fx-font-weight: bold; -fx-font-size: 13px; -fx-background-radius: 20px; -fx-padding: 8px 20px; -fx-cursor: hand;");
+        "-fx-background-color: linear-gradient(to bottom, #8a9b3a, #5b6623); -fx-text-fill: #e5e8d7; -fx-font-weight: bold; -fx-font-size: 13px; -fx-background-radius: 20px; -fx-padding: 8px 20px; -fx-cursor: hand; -fx-border-color: #3f4a23; -fx-border-radius: 20px; -fx-border-width: 1px;");
 
     Runnable doCloseAndExpire = () -> {
       root.getChildren().remove(overlay);
@@ -1391,15 +1439,15 @@ public class ClienteGUI extends Application implements MessageListener {
         }
       }
       if (btnOpenVU != null) {
-        btnOpenVU.setText("\uD83D\uDD12 Mensagem Expirada");
+        btnOpenVU.setText("\uD83D\uDD12 Transmissao Expirada");
         btnOpenVU.setDisable(true);
-        btnOpenVU.setStyle("-fx-background-color: #2b3322; -fx-text-fill: #888888; -fx-border-color: #555555; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 6px 12px;");
+        btnOpenVU.setStyle("-fx-background-color: rgba(30, 38, 10, 0.7); -fx-text-fill: #6b7b4a; -fx-border-color: #3f4a23; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 6px 12px;");
       }
     };
 
     btnClose.setOnAction(e -> doCloseAndExpire.run());
 
-    modalCard.getChildren().addAll(title, subtitle, content, warning, btnClose);
+    modalCard.getChildren().addAll(title, subtitle, divider, content, warning, btnClose);
     overlay.getChildren().add(modalCard);
 
     root.getChildren().add(overlay);
@@ -1415,26 +1463,26 @@ public class ClienteGUI extends Application implements MessageListener {
     box.setAlignment(Pos.TOP_CENTER);
     box.setMaxSize(350, 400);
     box.setStyle(
-        "-fx-background-color: #e3e6d8;" +
-            "-fx-border-color: #5b6623; -fx-border-width: 2.5px;" +
-            "-fx-background-radius: 12px; -fx-border-radius: 12px;" +
+        "-fx-background-color: #232d0f;" +
+            "-fx-border-color: #8a9b3a; -fx-border-width: 2px;" +
+            "-fx-background-radius: 14px; -fx-border-radius: 14px;" +
             "-fx-padding: 30px;" +
-            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 15, 0, 0, 5);");
+            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.45), 15, 0, 0, 5);");
 
     Label lblTitle = new Label("Detalhes do Grupo");
     lblTitle.setFont(Font.font("Impact", FontWeight.BOLD, 22));
-    lblTitle.setTextFill(Color.web("#5b6623"));
+    lblTitle.setTextFill(Color.web("#c9d873"));
 
     Label lblGroup = new Label(grupo);
     lblGroup.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
-    lblGroup.setTextFill(Color.web("#3f4a23"));
+    lblGroup.setTextFill(Color.web("#e5e8d7"));
 
     Label lblMembers = new Label("Membros no Servidor:");
     lblMembers.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
-    lblMembers.setTextFill(Color.web("#5b6623"));
+    lblMembers.setTextFill(Color.web("#8a9b3a"));
 
     ListView<String> membersList = new ListView<>();
-    membersList.setStyle("-fx-background-color: rgba(160,176,80,0.2); -fx-background-radius: 8px;");
+    membersList.setStyle("-fx-background-color: rgba(40,58,12,0.5); -fx-background-radius: 8px;");
 
     StackPane overlay = new StackPane();
 
@@ -1458,7 +1506,7 @@ public class ClienteGUI extends Application implements MessageListener {
           HBox cellBox = new HBox(10);
           cellBox.setAlignment(Pos.CENTER_LEFT);
           Label lblName = new Label(item);
-          lblName.setTextFill(Color.web("#3f4a23"));
+          lblName.setTextFill(Color.web("#d8e87d"));
           lblName.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
           HBox.setHgrow(lblName, Priority.ALWAYS);
           lblName.setMaxWidth(Double.MAX_VALUE);
@@ -1468,7 +1516,7 @@ public class ClienteGUI extends Application implements MessageListener {
           if (!item.contains("(Voc\u00EA)")) {
             SVGPath pvtIcon = new SVGPath();
             pvtIcon.setContent("M2.01 21L23 12 2.01 3 2 10l15 2-15 2z");
-            pvtIcon.setFill(Color.web("#5b6623"));
+            pvtIcon.setFill(Color.web("#8a9b3a"));
 
             Button btnPvt = new Button();
             btnPvt.setGraphic(pvtIcon);
@@ -1486,7 +1534,7 @@ public class ClienteGUI extends Application implements MessageListener {
 
           setGraphic(cellBox);
           setStyle(
-              "-fx-background-color: transparent; -fx-padding: 8px; -fx-border-color: #8a9b3a; -fx-border-width: 0 0 1px 0;");
+              "-fx-background-color: transparent; -fx-padding: 8px; -fx-border-color: #3f4a23; -fx-border-width: 0 0 1px 0;");
         }
       }
     });
@@ -1521,12 +1569,12 @@ public class ClienteGUI extends Application implements MessageListener {
 
     Button btnLeave = new Button("Sair do Grupo");
     btnLeave.setStyle(
-        "-fx-background-color: linear-gradient(to bottom, #d4b06a, #c4a05a); -fx-text-fill: #3c3010; -fx-background-radius: 20px; -fx-border-color: #a88940; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-padding: 8px 20px; -fx-font-size: 13px; -fx-font-weight: bold; -fx-cursor: hand;");
+        "-fx-background-color: rgba(120, 35, 35, 0.80); -fx-text-fill: #e5c0c0; -fx-background-radius: 20px; -fx-border-color: #7a2828; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-padding: 8px 20px; -fx-font-size: 13px; -fx-font-weight: bold; -fx-cursor: hand;");
 
     buttons.getChildren().addAll(btnClose, btnLeave);
     box.getChildren().addAll(lblTitle, lblGroup, lblMembers, membersList, buttons);
     overlay.getChildren().add(box);
-    overlay.setStyle("-fx-background-color: rgba(50, 60, 20, 0.55);");
+    overlay.setStyle("-fx-background-color: rgba(15, 20, 5, 0.65);");
 
     btnClose.setOnAction(e -> closeOverlay.run());
     btnLeave.setOnAction(e -> {
@@ -1558,19 +1606,19 @@ public class ClienteGUI extends Application implements MessageListener {
     errorBox.setAlignment(Pos.CENTER);
     errorBox.setMaxSize(420, 260);
     errorBox.setStyle(
-        "-fx-background-color: #e3e6d8;" +
-            "-fx-border-color: #5b6623; -fx-border-width: 2.5px;" +
-            "-fx-background-radius: 12px; -fx-border-radius: 12px;" +
+        "-fx-background-color: #232d0f;" +
+            "-fx-border-color: #8a9b3a; -fx-border-width: 2px;" +
+            "-fx-background-radius: 14px; -fx-border-radius: 14px;" +
             "-fx-padding: 30px;" +
-            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 15, 0, 0, 5);");
+            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.45), 15, 0, 0, 5);");
 
     Label lblTitle = new Label("[!] " + title);
     lblTitle.setFont(Font.font("Impact", FontWeight.BOLD, 26));
-    lblTitle.setTextFill(Color.web("#5b6623"));
+    lblTitle.setTextFill(Color.web("#c9d873"));
 
     Label lblMsg = new Label(message);
     lblMsg.setFont(Font.font("Segoe UI", 15));
-    lblMsg.setTextFill(Color.web("#3f4a23"));
+    lblMsg.setTextFill(Color.web("#a4b455"));
     lblMsg.setWrapText(true);
     lblMsg.setTextAlignment(TextAlignment.CENTER);
 
@@ -1580,7 +1628,7 @@ public class ClienteGUI extends Application implements MessageListener {
     errorBox.getChildren().addAll(lblTitle, lblMsg, btnOk);
 
     StackPane overlay = new StackPane(errorBox);
-    overlay.setStyle("-fx-background-color: rgba(50, 60, 20, 0.55);");
+    overlay.setStyle("-fx-background-color: rgba(15, 20, 5, 0.65);");
 
     btnOk.setOnAction(e -> {
       FadeTransition fadeOut = new FadeTransition(Duration.millis(200), overlay);
@@ -1611,24 +1659,24 @@ public class ClienteGUI extends Application implements MessageListener {
     box.setAlignment(Pos.CENTER);
     box.setMaxSize(440, 280);
     box.setStyle(
-        "-fx-background-color: #e3e6d8;" +
-            "-fx-border-color: #5b6623; -fx-border-width: 2.5px;" +
-            "-fx-background-radius: 12px; -fx-border-radius: 12px;" +
+        "-fx-background-color: #232d0f;" +
+            "-fx-border-color: #8a9b3a; -fx-border-width: 2px;" +
+            "-fx-background-radius: 14px; -fx-border-radius: 14px;" +
             "-fx-padding: 30px;" +
-            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 15, 0, 0, 5);");
+            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.45), 15, 0, 0, 5);");
 
     Label lblTitle = new Label(title);
     lblTitle.setFont(Font.font("Impact", FontWeight.BOLD, 24));
-    lblTitle.setTextFill(Color.web("#5b6623"));
+    lblTitle.setTextFill(Color.web("#c9d873"));
 
     Label lblPrompt = new Label(prompt);
     lblPrompt.setFont(Font.font("Segoe UI", 14));
-    lblPrompt.setTextFill(Color.web("#3f4a23"));
+    lblPrompt.setTextFill(Color.web("#a4b455"));
 
     TextField txtInput = new TextField();
     txtInput.setMaxWidth(300);
     txtInput.setStyle(
-        "-fx-background-color: rgba(160,176,80,0.35); -fx-background-radius: 20px; -fx-padding: 10px 18px; -fx-font-size: 14px;");
+        "-fx-background-color: rgba(70,90,25,0.45); -fx-text-fill: #e5e8d7; -fx-prompt-text-fill: #8a9b3a; -fx-background-radius: 20px; -fx-padding: 10px 18px; -fx-font-size: 14px;");
 
     HBox buttons = new HBox(12);
     buttons.setAlignment(Pos.CENTER);
@@ -1638,13 +1686,13 @@ public class ClienteGUI extends Application implements MessageListener {
 
     Button btnCancel = new Button("Cancelar");
     btnCancel.setStyle(
-        "-fx-background-color: linear-gradient(to bottom, #d4b06a, #c4a05a); -fx-text-fill: #3c3010; -fx-background-radius: 20px; -fx-border-color: #a88940; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-padding: 8px 20px; -fx-font-size: 13px; -fx-font-weight: bold; -fx-cursor: hand;");
+        "-fx-background-color: rgba(70, 85, 28, 0.5); -fx-text-fill: #c9d873; -fx-background-radius: 20px; -fx-border-color: #5b6623; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-padding: 8px 20px; -fx-font-size: 13px; -fx-font-weight: bold; -fx-cursor: hand;");
 
     buttons.getChildren().addAll(btnOk, btnCancel);
     box.getChildren().addAll(lblTitle, lblPrompt, txtInput, buttons);
 
     StackPane overlay = new StackPane(box);
-    overlay.setStyle("-fx-background-color: rgba(50, 60, 20, 0.55);");
+    overlay.setStyle("-fx-background-color: rgba(15, 20, 5, 0.65);");
 
     Runnable closeOverlay = () -> {
       FadeTransition fadeOut = new FadeTransition(Duration.millis(200), overlay);
@@ -1681,25 +1729,25 @@ public class ClienteGUI extends Application implements MessageListener {
     box.setAlignment(Pos.CENTER);
     box.setMaxSize(440, 380);
     box.setStyle(
-        "-fx-background-color: #e3e6d8;" +
-            "-fx-border-color: #5b6623; -fx-border-width: 2.5px;" +
-            "-fx-background-radius: 12px; -fx-border-radius: 12px;" +
+        "-fx-background-color: #232d0f;" +
+            "-fx-border-color: #8a9b3a; -fx-border-width: 2px;" +
+            "-fx-background-radius: 14px; -fx-border-radius: 14px;" +
             "-fx-padding: 30px;" +
-            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 15, 0, 0, 5);");
+            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.45), 15, 0, 0, 5);");
 
     Label lblTitle = new Label(title);
     lblTitle.setFont(Font.font("Impact", FontWeight.BOLD, 24));
-    lblTitle.setTextFill(Color.web("#5b6623"));
+    lblTitle.setTextFill(Color.web("#c9d873"));
 
     Label lblPrompt = new Label(prompt);
     lblPrompt.setFont(Font.font("Segoe UI", 14));
-    lblPrompt.setTextFill(Color.web("#3f4a23"));
+    lblPrompt.setTextFill(Color.web("#a4b455"));
 
     ListView<String> listOptions = new ListView<>();
     listOptions.getItems().addAll(options);
     listOptions.setMaxHeight(160);
     listOptions.setMaxWidth(300);
-    listOptions.setStyle("-fx-background-color: rgba(160,176,80,0.2); -fx-background-radius: 8px;");
+    listOptions.setStyle("-fx-background-color: rgba(40,58,12,0.5); -fx-background-radius: 8px;");
     listOptions.setCellFactory(lv -> createStyledCell());
     listOptions.getSelectionModel().selectFirst();
 
@@ -1711,13 +1759,13 @@ public class ClienteGUI extends Application implements MessageListener {
 
     Button btnCancel = new Button("Cancelar");
     btnCancel.setStyle(
-        "-fx-background-color: linear-gradient(to bottom, #d4b06a, #c4a05a); -fx-text-fill: #3c3010; -fx-background-radius: 20px; -fx-border-color: #a88940; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-padding: 8px 20px; -fx-font-size: 13px; -fx-font-weight: bold; -fx-cursor: hand;");
+        "-fx-background-color: rgba(70, 85, 28, 0.5); -fx-text-fill: #c9d873; -fx-background-radius: 20px; -fx-border-color: #5b6623; -fx-border-radius: 20px; -fx-border-width: 1px; -fx-padding: 8px 20px; -fx-font-size: 13px; -fx-font-weight: bold; -fx-cursor: hand;");
 
     buttons.getChildren().addAll(btnOk, btnCancel);
     box.getChildren().addAll(lblTitle, lblPrompt, listOptions, buttons);
 
     StackPane overlay = new StackPane(box);
-    overlay.setStyle("-fx-background-color: rgba(50, 60, 20, 0.55);");
+    overlay.setStyle("-fx-background-color: rgba(15, 20, 5, 0.65);");
 
     Runnable closeOverlay = () -> {
       FadeTransition fadeOut = new FadeTransition(Duration.millis(200), overlay);
@@ -1860,10 +1908,10 @@ public class ClienteGUI extends Application implements MessageListener {
         // Chat Privado (1 para 1): Transicao direta
         if (status == 2) {
           lblTick.setText(" \u2713\u2713");
-          lblTick.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold;"); // Entregue ao dispositivo (Branco Puro)
+          lblTick.setStyle("-fx-text-fill: #c9d873; -fx-font-weight: bold;"); // Entregue ao dispositivo (Lima EDEN)
         } else if (status == 3) {
           lblTick.setText(" \u2713\u2713");
-          lblTick.setStyle("-fx-text-fill: #00f0ff; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.9), 8, 0.6, 0, 0);"); // Lido pelo destinatario (Ciano Neon Glow)
+          lblTick.setStyle("-fx-text-fill: #00f0ff; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.5), 4, 0.3, 0, 0);"); // Lido pelo destinatario (Ciano Neon Suave)
         }
       } else {
         // Chat de Grupo: Compativel tanto com controle de contagem no cliente quanto com confirmacao enviada pelo servidor
@@ -1884,10 +1932,10 @@ public class ClienteGUI extends Application implements MessageListener {
 
         if (status == 3) {
           lblTick.setText(" \u2713\u2713");
-          lblTick.setStyle("-fx-text-fill: #00f0ff; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.9), 8, 0.6, 0, 0);"); // Lido / Visto (Ciano Neon Glow)
+          lblTick.setStyle("-fx-text-fill: #00f0ff; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.5), 4, 0.3, 0, 0);"); // Lido / Visto (Ciano Neon Suave)
         } else if (status == 2) {
           lblTick.setText(" \u2713\u2713");
-          lblTick.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold;"); // Entregue ao grupo (Branco Puro)
+          lblTick.setStyle("-fx-text-fill: #c9d873; -fx-font-weight: bold;"); // Entregue ao grupo (Lima EDEN)
         }
       }
     });
@@ -1899,10 +1947,10 @@ public class ClienteGUI extends Application implements MessageListener {
 
     if (todosLeram) {
       lblTick.setText(" \u2713\u2713");
-      lblTick.setStyle("-fx-text-fill: #00f0ff; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.9), 8, 0.6, 0, 0);"); // Lido por TODOS (Ciano Neon Glow)
+      lblTick.setStyle("-fx-text-fill: #00f0ff; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,240,255,0.5), 4, 0.3, 0, 0);"); // Lido por TODOS (Ciano Neon Suave)
     } else if (algumEntregue) {
       lblTick.setText(" \u2713\u2713");
-      lblTick.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold;"); // Entregue ao grupo (Branco Puro)
+      lblTick.setStyle("-fx-text-fill: #c9d873; -fx-font-weight: bold;"); // Entregue ao grupo (Lima EDEN)
     }
   }
 
