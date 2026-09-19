@@ -92,6 +92,7 @@ public class ClienteGUI extends Application implements MessageListener {
   private Map<String, String> messageToChatMap = new HashMap<>();
   private Map<String, Set<String>> messageReadConfirmations = new HashMap<>();
   private Map<String, Set<String>> messageDeliveryConfirmations = new HashMap<>();
+  private Map<String, Set<String>> messageExpectedMembers = new HashMap<>();
   private boolean isVuMode = false;
   private Set<String> openedVuMessageIds = new HashSet<>();
   private Set<String> meusBloqueados = new HashSet<>();
@@ -348,53 +349,69 @@ public class ClienteGUI extends Application implements MessageListener {
       btnDiscover.setText("Buscando...");
       btnDiscover.setDisable(true);
       new Thread(() -> {
+        java.util.Set<String> ipsDescobertos = new java.util.LinkedHashSet<>();
         try (java.net.DatagramSocket socket = new java.net.DatagramSocket()) {
           socket.setBroadcast(true);
-          socket.setSoTimeout(2500);
+          socket.setSoTimeout(1000);
 
-          // Envia busca padrao (8888) e legada EDEN (5001) em broadcast e localhost
+          // Envia busca padrao (8888) e legada EDEN (5001) para todas as interfaces ativas
           byte[] dadosPadrao = "SERVIDOR_IP".getBytes(StandardCharsets.UTF_8);
           byte[] dadosEden = "DISCOVER_EDEN".getBytes(StandardCharsets.UTF_8);
 
-          socket.send(new java.net.DatagramPacket(dadosPadrao, dadosPadrao.length,
-              java.net.InetAddress.getByName("255.255.255.255"), Protocolo.PORTA_DISCOVERY));
-          socket.send(new java.net.DatagramPacket(dadosPadrao, dadosPadrao.length,
-              java.net.InetAddress.getByName("127.0.0.1"), Protocolo.PORTA_DISCOVERY));
+          List<java.net.InetAddress> destinos = coletarBroadcasts();
+          for (java.net.InetAddress dest : destinos) {
+            try {
+              socket.send(new java.net.DatagramPacket(dadosPadrao, dadosPadrao.length, dest, Protocolo.PORTA_DISCOVERY));
+              socket.send(new java.net.DatagramPacket(dadosEden, dadosEden.length, dest, Protocolo.PORTA_DISCOVERY_EDEN));
+            } catch (Exception ignored) {
+            }
+          }
 
-          socket.send(new java.net.DatagramPacket(dadosEden, dadosEden.length,
-              java.net.InetAddress.getByName("255.255.255.255"), Protocolo.PORTA_DISCOVERY_EDEN));
-          socket.send(new java.net.DatagramPacket(dadosEden, dadosEden.length,
-              java.net.InetAddress.getByName("127.0.0.1"), Protocolo.PORTA_DISCOVERY_EDEN));
-
+          long tempoLimite = System.currentTimeMillis() + 1800;
           byte[] buffer = new byte[256];
-          java.net.DatagramPacket resposta = new java.net.DatagramPacket(buffer, buffer.length);
-          socket.receive(resposta);
+          while (System.currentTimeMillis() < tempoLimite) {
+            try {
+              java.net.DatagramPacket resposta = new java.net.DatagramPacket(buffer, buffer.length);
+              socket.receive(resposta);
+              String msg = new String(resposta.getData(), 0, resposta.getLength(), StandardCharsets.UTF_8).trim();
+              if (msg.equals("IP") || msg.equals("EDEN_HERE")) {
+                ipsDescobertos.add(resposta.getAddress().getHostAddress());
+              }
+            } catch (java.net.SocketTimeoutException ste) {
+              if (!ipsDescobertos.isEmpty() && System.currentTimeMillis() >= tempoLimite - 800) {
+                break;
+              }
+            }
+          }
+        } catch (Exception ex) {
+          System.out.println("[GUI] Erro no discovery: " + ex.getMessage());
+        }
 
-          String msg = new String(resposta.getData(), 0, resposta.getLength(), StandardCharsets.UTF_8).trim();
-          if (msg.equals("IP") || msg.equals("EDEN_HERE")) {
-            String ipDescoberto = resposta.getAddress().getHostAddress();
-            Platform.runLater(() -> {
-              txtIpServidor.setText(ipDescoberto);
+        Platform.runLater(() -> {
+          if (ipsDescobertos.isEmpty()) {
+            btnDiscover.setText("Nao achou");
+            txtIpServidor.setPromptText("Nao achou, digite o IP...");
+          } else if (ipsDescobertos.size() == 1) {
+            String ipUnico = ipsDescobertos.iterator().next();
+            txtIpServidor.setText(ipUnico);
+            btnDiscover.setText("Encontrado!");
+          } else {
+            btnDiscover.setText(ipsDescobertos.size() + " achados!");
+            mostrarSeletorServidores(ipsDescobertos, ipEscolhido -> {
+              txtIpServidor.setText(ipEscolhido);
               btnDiscover.setText("Encontrado!");
             });
           }
-        } catch (java.net.SocketTimeoutException ex) {
-          Platform.runLater(() -> {
-            btnDiscover.setText("Nao achou");
-            txtIpServidor.setPromptText("Nao achou, digite o IP...");
-          });
-        } catch (Exception ex) {
-          System.out.println("[GUI] Erro no discovery: " + ex.getMessage());
-        } finally {
-          try {
-            Thread.sleep(2000);
-          } catch (Exception ignored) {
-          }
-          Platform.runLater(() -> {
-            btnDiscover.setText("Buscar");
-            btnDiscover.setDisable(false);
-          });
+        });
+
+        try {
+          Thread.sleep(2000);
+        } catch (Exception ignored) {
         }
+        Platform.runLater(() -> {
+          btnDiscover.setText("Buscar");
+          btnDiscover.setDisable(false);
+        });
       }).start();
     });
 
@@ -935,7 +952,6 @@ public class ClienteGUI extends Application implements MessageListener {
           }
           groupList.getSelectionModel().select(grupo);
           addChatBubble(grupo, "SYSTEM", "Voc\u00EA entrou no grupo " + grupo + ".", false, false, true);
-          // UDP message for JOINED is now handled by the server
         } else if (resposta != null && Protocolo.ERRO.equals(resposta.getOperacao())) {
           showErrorOverlay("Erro ao Entrar", resposta.getTextoMensagem());
         }
@@ -947,8 +963,6 @@ public class ClienteGUI extends Application implements MessageListener {
     String selected = groupList.getSelectionModel().getSelectedItem();
     if (selected == null)
       return;
-
-    // UDP message for LEFT is now handled by the server
 
     APDU resposta = tcp.leave(selected, eu);
     if (resposta != null && Protocolo.OK.equals(resposta.getOperacao())) {
@@ -1008,7 +1022,6 @@ public class ClienteGUI extends Application implements MessageListener {
                       groupList.getSelectionModel().select(grupoEscolhido);
                       addChatBubble(grupoEscolhido, "SYSTEM",
                           "Voc\u00EA entrou no grupo " + grupoEscolhido + ".", false, false, true);
-                      // UDP message for JOINED is now handled by the server
                     } else if (res != null && Protocolo.ERRO.equals(res.getOperacao())) {
                       showErrorOverlay("Erro ao Entrar", res.getTextoMensagem());
                     }
@@ -1197,6 +1210,36 @@ public class ClienteGUI extends Application implements MessageListener {
         messageToChatMap.put(idMensagem, currentChat);
         messageReadConfirmations.put(idMensagem, new HashSet<>());
         messageDeliveryConfirmations.put(idMensagem, new HashSet<>());
+
+        if (!currentChat.startsWith("[PVT] ")) {
+          Set<String> expected = new HashSet<>();
+          if (tcp != null) {
+            try {
+              APDU respMembers = tcp.listMembers(currentChat);
+              if (respMembers != null && Protocolo.OK.equals(respMembers.getOperacao())) {
+                String data = respMembers.getTextoMensagem();
+                if (data != null && !data.isEmpty()) {
+                  for (String m : data.split(",")) {
+                    String norm = normalizarNomeUser(m);
+                    if (!norm.isEmpty() && eu != null && !norm.equalsIgnoreCase(normalizarNomeUser(eu.getNome()))) {
+                      expected.add(norm);
+                    }
+                  }
+                }
+              }
+            } catch (Exception ignored) {
+            }
+          }
+          if (expected.isEmpty() && knownGroupMembers.containsKey(currentChat)) {
+            for (String km : knownGroupMembers.get(currentChat)) {
+              String norm = normalizarNomeUser(km);
+              if (!norm.isEmpty() && eu != null && !norm.equalsIgnoreCase(normalizarNomeUser(eu.getNome()))) {
+                expected.add(norm);
+              }
+            }
+          }
+          messageExpectedMembers.put(idMensagem, expected);
+        }
       }
 
       addChatBubble(currentChat, eu.getNome(), msg, true, false, false, idMensagem, sentAsVu);
@@ -1643,6 +1686,105 @@ public class ClienteGUI extends Application implements MessageListener {
     fadeIn.play();
   }
 
+  /**
+   * Coleta todos os enderecos de broadcast de todas as interfaces de rede ativas,
+   * alem de 255.255.255.255 e 127.0.0.1.
+   */
+  private List<java.net.InetAddress> coletarBroadcasts() {
+    List<java.net.InetAddress> lista = new ArrayList<>();
+    try {
+      java.util.Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces();
+      while (interfaces != null && interfaces.hasMoreElements()) {
+        java.net.NetworkInterface ni = interfaces.nextElement();
+        if (ni.isLoopback() || !ni.isUp()) continue;
+        for (java.net.InterfaceAddress ia : ni.getInterfaceAddresses()) {
+          java.net.InetAddress bcast = ia.getBroadcast();
+          if (bcast != null && !lista.contains(bcast)) {
+            lista.add(bcast);
+          }
+        }
+      }
+    } catch (Exception ignored) {
+    }
+    try {
+      java.net.InetAddress global = java.net.InetAddress.getByName("255.255.255.255");
+      if (!lista.contains(global)) lista.add(global);
+      java.net.InetAddress loopback = java.net.InetAddress.getByName("127.0.0.1");
+      if (!lista.contains(loopback)) lista.add(loopback);
+    } catch (Exception ignored) {
+    }
+    return lista;
+  }
+
+  /**
+   * Exibe overlay quando multiplos servidores forem encontrados na rede local,
+   * permitindo ao usuario escolher a qual deseja se conectar.
+   */
+  private void mostrarSeletorServidores(java.util.Set<String> ips, java.util.function.Consumer<String> onSelected) {
+    VBox dialogBox = new VBox(14);
+    dialogBox.setAlignment(Pos.CENTER);
+    dialogBox.setMaxSize(420, 320);
+    dialogBox.setStyle(
+        "-fx-background-color: #232d0f;" +
+            "-fx-border-color: #8a9b3a; -fx-border-width: 2px;" +
+            "-fx-background-radius: 14px; -fx-border-radius: 14px;" +
+            "-fx-padding: 24px;" +
+            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 15, 0, 0, 5);");
+
+    Label lblTitulo = new Label("[ SERVIDORES DETECTADOS ]");
+    lblTitulo.setFont(Font.font("Impact", FontWeight.BOLD, 22));
+    lblTitulo.setTextFill(Color.web("#c9d873"));
+
+    Label lblSub = new Label("Multiplos servidores responderam na rede. Selecione o servidor desejado:");
+    lblSub.setFont(Font.font("Segoe UI", 13));
+    lblSub.setTextFill(Color.web("#a4b455"));
+    lblSub.setWrapText(true);
+    lblSub.setTextAlignment(TextAlignment.CENTER);
+
+    VBox listaIps = new VBox(8);
+    listaIps.setAlignment(Pos.CENTER);
+
+    StackPane overlay = new StackPane(dialogBox);
+    overlay.setStyle("-fx-background-color: rgba(15, 20, 5, 0.70);");
+
+    for (String ip : ips) {
+      Button btnIp = new Button("Conectar em " + ip);
+      btnIp.getStyleClass().add("btn-eden");
+      btnIp.setPrefWidth(260);
+      btnIp.setOnAction(e -> {
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(200), overlay);
+        fadeOut.setFromValue(1);
+        fadeOut.setToValue(0);
+        fadeOut.setOnFinished(ev -> {
+          root.getChildren().remove(overlay);
+          onSelected.accept(ip);
+        });
+        fadeOut.play();
+      });
+      addHoverScale(btnIp);
+      listaIps.getChildren().add(btnIp);
+    }
+
+    Button btnCancelar = new Button("Cancelar");
+    btnCancelar.setStyle("-fx-background-color: transparent; -fx-text-fill: #8a9b3a; -fx-font-size: 12px; -fx-cursor: hand;");
+    btnCancelar.setOnAction(e -> {
+      FadeTransition fadeOut = new FadeTransition(Duration.millis(200), overlay);
+      fadeOut.setFromValue(1);
+      fadeOut.setToValue(0);
+      fadeOut.setOnFinished(ev -> root.getChildren().remove(overlay));
+      fadeOut.play();
+    });
+
+    dialogBox.getChildren().addAll(lblTitulo, lblSub, listaIps, btnCancelar);
+
+    overlay.setOpacity(0);
+    root.getChildren().add(overlay);
+    FadeTransition fadeIn = new FadeTransition(Duration.millis(200), overlay);
+    fadeIn.setFromValue(0);
+    fadeIn.setToValue(1);
+    fadeIn.play();
+  }
+
   // =========================================================================
   // OVERLAY DE INPUT CUSTOMIZADO (substitui TextInputDialog)
   // =========================================================================
@@ -1909,13 +2051,21 @@ public class ClienteGUI extends Application implements MessageListener {
           lblTick.setStyle("-fx-text-fill: #00ff66; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,255,102,0.7), 6, 0.5, 0, 0);"); // Lido pelo destinatario (Verde Neon)
         }
       } else {
-        // Chat de Grupo: Compativel tanto com controle de contagem no cliente quanto com confirmacao enviada pelo servidor
+        // Chat de Grupo: Agregacao estrita por membro (Verde Neon apenas quando TODOS lerem)
         Set<String> readUsers = messageReadConfirmations.computeIfAbsent(idMensagem, k -> new HashSet<>());
         Set<String> deliveredUsers = messageDeliveryConfirmations.computeIfAbsent(idMensagem, k -> new HashSet<>());
+        Set<String> expectedMembers = messageExpectedMembers.computeIfAbsent(idMensagem, k -> new HashSet<>());
 
+        boolean lidoPorTodosAgregado = false;
         if (nomeConfirmou != null && !nomeConfirmou.isEmpty()) {
           String normConfirm = normalizarNomeUser(nomeConfirmou);
-          if (!normConfirm.isEmpty()) {
+          if (normConfirm.equalsIgnoreCase("todos") || normConfirm.equalsIgnoreCase("servidor") || normConfirm.equalsIgnoreCase("global")) {
+            if (status == 3) {
+              lidoPorTodosAgregado = true;
+              readUsers.addAll(expectedMembers);
+              deliveredUsers.addAll(expectedMembers);
+            }
+          } else if (!normConfirm.isEmpty()) {
             if (status == 2)
               deliveredUsers.add(normConfirm);
             if (status == 3) {
@@ -1925,22 +2075,29 @@ public class ClienteGUI extends Application implements MessageListener {
           }
         }
 
-        if (status == 3) {
-          lblTick.setText(" \u2713\u2713");
-          lblTick.setStyle("-fx-text-fill: #00ff66; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,255,102,0.7), 6, 0.5, 0, 0);"); // Lido / Visto (Verde Neon)
-        } else if (status == 2) {
-          lblTick.setText(" \u2713\u2713");
-          lblTick.setStyle("-fx-text-fill: #c9d873; -fx-font-weight: bold;"); // Entregue ao grupo (Lima EDEN)
-        } else if (status == 1) {
-          lblTick.setText(" \u2713");
-          lblTick.setStyle("-fx-text-fill: #8a9b3a; -fx-font-weight: bold;"); // Chegou ao servidor
+        // Se expectedMembers ainda estiver vazio, tenta inferir de knownGroupMembers
+        if (expectedMembers.isEmpty() && knownGroupMembers.containsKey(chatId)) {
+          for (String km : knownGroupMembers.get(chatId)) {
+            String norm = normalizarNomeUser(km);
+            if (!norm.isEmpty() && eu != null && !norm.equalsIgnoreCase(normalizarNomeUser(eu.getNome()))) {
+              expectedMembers.add(norm);
+            }
+          }
         }
+
+        // Se expectedMembers ainda estiver vazio mas recebemos confirmacoes de membros
+        if (expectedMembers.isEmpty()) {
+          expectedMembers.addAll(deliveredUsers);
+          expectedMembers.addAll(readUsers);
+        }
+
+        atualizarTickGrupo(lblTick, readUsers, deliveredUsers, expectedMembers, lidoPorTodosAgregado);
       }
     });
   }
 
-  private void atualizarTickGrupo(Label lblTick, Set<String> readUsers, Set<String> deliveredUsers, Set<String> expectedMembers) {
-    boolean todosLeram = !expectedMembers.isEmpty() && readUsers.containsAll(expectedMembers);
+  private void atualizarTickGrupo(Label lblTick, Set<String> readUsers, Set<String> deliveredUsers, Set<String> expectedMembers, boolean lidoPorTodosAgregado) {
+    boolean todosLeram = lidoPorTodosAgregado || (!expectedMembers.isEmpty() && readUsers.containsAll(expectedMembers));
     boolean algumEntregue = !deliveredUsers.isEmpty() || !readUsers.isEmpty();
 
     if (todosLeram) {
@@ -1948,7 +2105,10 @@ public class ClienteGUI extends Application implements MessageListener {
       lblTick.setStyle("-fx-text-fill: #00ff66; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(0,255,102,0.7), 6, 0.5, 0, 0);"); // Lido por TODOS (Verde Neon)
     } else if (algumEntregue) {
       lblTick.setText(" \u2713\u2713");
-      lblTick.setStyle("-fx-text-fill: #c9d873; -fx-font-weight: bold;"); // Entregue ao grupo (Lima EDEN)
+      lblTick.setStyle("-fx-text-fill: #c9d873; -fx-font-weight: bold;"); // Entregue / Leitura parcial (Lima EDEN)
+    } else {
+      lblTick.setText(" \u2713");
+      lblTick.setStyle("-fx-text-fill: #8a9b3a; -fx-font-weight: bold;"); // Chegou ao servidor
     }
   }
 

@@ -99,13 +99,13 @@ public class TesteGroupConfirmTicks {
 
       Thread.sleep(1500);
 
-      // Verifica que Bob confirmou leitura mas Carol ainda nao
+      // Com agregacao no servidor: Alice NAO deve receber Status 3 ainda (aguardando Carol)
       long countStatus3 = statusRecebidosAlice.stream().filter(s -> s == 3).count();
-      System.out.println("    Confirmacoes de leitura (Status 3) recebidas por Alice: " + countStatus3 + " / 2 esperadas");
-      if (countStatus3 != 1) {
-        throw new RuntimeException("FALHA: Esperado exatamente 1 confirmação de leitura (somente do Bob)!");
+      System.out.println("    Confirmacoes de leitura (Status 3) recebidas por Alice ate agora: " + countStatus3);
+      if (countStatus3 != 0) {
+        throw new RuntimeException("FALHA: O servidor nao deve repassar Status 3 quando apenas 1 membro leu!");
       }
-      System.out.println("    >>> SUCESSO PARCIAL: Apenas 1 membro (Bob) leu. O tick na UI deve continuar em Status 2 (Branco Puro).");
+      System.out.println("    >>> SUCESSO PARCIAL: O servidor reteve o Status 3 pois Carol ainda nao leu. Alice continua em Status 2.");
 
       // 8. Carol confirma leitura (Status 3)
       System.out.println("\n[3] Carol abrindo o grupo e confirmando leitura (Status 3)...");
@@ -113,13 +113,17 @@ public class TesteGroupConfirmTicks {
 
       Thread.sleep(1500);
 
+      // Agora que TODOS leram (Bob e Carol), o servidor deve emitir Status 3 ("TODOS") para Alice
       countStatus3 = statusRecebidosAlice.stream().filter(s -> s == 3).count();
-      System.out.println("    Confirmacoes de leitura (Status 3) recebidas por Alice: " + countStatus3 + " / 2 esperadas");
-      if (countStatus3 != 2) {
-        throw new RuntimeException("FALHA: Esperado 2 confirmações de leitura (Bob e Carol)!");
+      System.out.println("    Confirmacoes de leitura (Status 3) recebidas por Alice apos todos lerem: " + countStatus3);
+      if (countStatus3 != 1) {
+        throw new RuntimeException("FALHA: Esperado exatamente 1 confirmacao de leitura agregada (TODOS leram)!");
+      }
+      if (!confirmadosAlice.contains("TODOS")) {
+        throw new RuntimeException("FALHA: Esperado que a confirmacao agregada venha identificada como 'TODOS'!");
       }
 
-      System.out.println("    >>> SUCESSO TOTAL: TODOS os membros do grupo (Bob e Carol) leram a mensagem!");
+      System.out.println("    >>> SUCESSO TOTAL: O servidor agregou e repassou Status 3 (TODOS) quando todos leram!");
       System.out.println("\n==================================================");
       System.out.println("  TESTE DE CONFIRM EM GRUPO PASSOU COM 100% SUCESSO!");
       System.out.println("==================================================");

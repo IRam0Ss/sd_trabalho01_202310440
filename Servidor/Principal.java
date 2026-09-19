@@ -24,6 +24,7 @@ public class Principal {
    * @param args Argumentos de linha de comando
    */
   public static void main(String[] args) {
+    System.setProperty("java.net.preferIPv4Stack", "true");
     Servidor servidor = new Servidor();
     servidor.iniciar();
   }

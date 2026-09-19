@@ -14,6 +14,9 @@ import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.Inet4Address;
+import java.net.NetworkInterface;
+import java.util.Enumeration;
 import java.util.Set;
 
 import Protocol.APDU;
@@ -79,6 +82,7 @@ public class Servidor {
     discoveryEden.start();
 
     System.out.println("=== Servidor IM iniciado ===");
+    imprimirEnderecosLocais();
     System.out.println("TCP escutando em " + Protocolo.PORTA_SERVIDOR_TCP + " (padrao) e " + Protocolo.PORTA_SERVIDOR_LEGACY + " (legado)");
     System.out.println("UDP escutando em " + Protocolo.PORTA_SERVIDOR_UDP + " (padrao) e " + Protocolo.PORTA_SERVIDOR_LEGACY + " (legado)");
     System.out.println("Discovery escutando em " + Protocolo.PORTA_DISCOVERY + " (padrao) e " + Protocolo.PORTA_DISCOVERY_EDEN + " (EDEN)");
@@ -99,6 +103,31 @@ public class Servidor {
         System.err.println("[SERVIDOR] Erro ao notificar: " + e.getMessage());
       }
     }));
+  }
+
+  /**
+   * Identifica e exibe no console todos os enderecos IPv4 disponiveis nas interfaces de rede ativas.
+   */
+  private void imprimirEnderecosLocais() {
+    try {
+      System.out.println("Interfaces de rede detectadas:");
+      Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+      while (interfaces.hasMoreElements()) {
+        NetworkInterface netIf = interfaces.nextElement();
+        if (netIf.isLoopback() || !netIf.isUp()) {
+          continue;
+        }
+        Enumeration<InetAddress> enderecos = netIf.getInetAddresses();
+        while (enderecos.hasMoreElements()) {
+          InetAddress addr = enderecos.nextElement();
+          if (addr instanceof Inet4Address) {
+            System.out.println("  -> [" + netIf.getDisplayName() + "] IPv4: " + addr.getHostAddress());
+          }
+        }
+      }
+    } catch (Exception e) {
+      System.err.println("[SERVIDOR] Erro ao enumerar interfaces de rede: " + e.getMessage());
+    }
   }
 
 }

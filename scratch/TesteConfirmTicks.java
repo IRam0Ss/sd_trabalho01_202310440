@@ -50,7 +50,7 @@ public class TesteConfirmTicks {
 
       udpAlice.setListener(new model.MessageListener() {
         @Override
-        public void onMessageReceived(String destino, utils.InfoUser remetente, String mensagem, boolean isPrivate) {}
+        public void onMessageReceived(String idMensagem, String destino, utils.InfoUser remetente, String mensagem, boolean isPrivate, boolean isVisualizacaoUnica) {}
         @Override
         public void onShutdown() {}
         @Override

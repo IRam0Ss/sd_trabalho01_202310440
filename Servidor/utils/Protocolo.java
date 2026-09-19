@@ -37,6 +37,9 @@ public class Protocolo {
   /** Comando SHUTDOWN: notificacao broadcast de encerramento do servidor */
   public static final String SHUTDOWN = "SHUTDOWN";
 
+  /** Comando LOGOUT: desconexao graciosa solicitada pelo cliente */
+  public static final String LOGOUT = "LOGOUT";
+
   /** Comando SENDPVT: envio de mensagem privada direta */
   public static final String SENDPVT = "SENDPVT";
 

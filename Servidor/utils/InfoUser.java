@@ -68,6 +68,24 @@ public class InfoUser {
   }
 
   /**
+   * Atualiza o endereco IP do usuario (usado para atualizacao dinamica de transporte).
+   * 
+   * @param ip Novo endereco IP.
+   */
+  public void setIp(String ip) {
+    this.ip = ip;
+  }
+
+  /**
+   * Atualiza a porta UDP do usuario.
+   * 
+   * @param porta Novo numero de porta.
+   */
+  public void setPorta(int porta) {
+    this.porta = porta;
+  }
+
+  /**
    * Empacota o objeto em uma string delimitada ("nome;ip;porta").
    * Utilizado para serializacao textual legada e compatibilidade.
    * 
@@ -117,10 +135,10 @@ public class InfoUser {
   }
 
   /**
-   * Avalia a igualdade entre dois usuarios baseando-se no endereco IP e Nome.
+   * Avalia a igualdade entre dois usuarios baseando-se no Nome de usuario (identidade unica no chat).
    * 
    * @param obj Objeto a ser comparado.
-   * @return true se tiverem o mesmo IP e Nome, false caso contrario.
+   * @return true se tiverem o mesmo Nome (case-insensitive), false caso contrario.
    */
   @Override
   public boolean equals(Object obj) {
@@ -131,17 +149,20 @@ public class InfoUser {
       return false;
     }
     InfoUser comparado = (InfoUser) obj;
-    return this.ip.equals(comparado.ip) && this.nome.equals(comparado.nome);
+    if (this.nome == null || comparado.nome == null) {
+      return false;
+    }
+    return this.nome.trim().equalsIgnoreCase(comparado.nome.trim());
   }
 
   /**
-   * Gera o codigo hash do usuario combinando IP e Nome.
+   * Gera o codigo hash do usuario baseado no Nome (case-insensitive).
    * 
    * @return O codigo hash gerado.
    */
   @Override
   public int hashCode() {
-    return Objects.hash(this.ip, this.nome);
+    return this.nome != null ? this.nome.trim().toLowerCase().hashCode() : 0;
   }
 
 } // fim class

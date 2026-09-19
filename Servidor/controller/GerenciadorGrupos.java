@@ -73,10 +73,14 @@ public class GerenciadorGrupos {
 
     List<InfoUser> membros = gruposExistentes.get(nomeGrupo); // lista todos os membros do grupo
 
-    if (membros.contains(usuario)) {
-      System.out.println("[GERENCIADOR] [WARNING] Usuario '" + usuario.getNome() + "' tentou entrar no grupo '"
-          + nomeGrupo + "' mas ja e membro");
-      return false;
+    for (InfoUser m : membros) {
+      if (m.getNome().trim().equalsIgnoreCase(usuario.getNome().trim())) {
+        m.setIp(usuario.getIp());
+        m.setPorta(usuario.getPorta());
+        System.out.println("[GERENCIADOR] [WARNING] Usuario '" + usuario.getNome() + "' tentou entrar no grupo '"
+            + nomeGrupo + "' mas ja e membro (sessao atualizada)");
+        return false;
+      }
     }
     membros.add(usuario); // adiciona o novo membro
     System.out.println("[GERENCIADOR] [INFO] Usuario '" + usuario.getNome() + "' entrou no grupo '" + nomeGrupo
@@ -101,12 +105,12 @@ public class GerenciadorGrupos {
     }
     List<InfoUser> membros = gruposExistentes.get(nomeGrupo);
 
-    if (!membros.contains(usuario)) {
+    boolean removeu = membros.removeIf(m -> m.getNome().trim().equalsIgnoreCase(usuario.getNome().trim()));
+    if (!removeu) {
       System.out.println("[GERENCIADOR] [WARNING] Usuario '" + usuario.getNome() + "' tentou sair do grupo '"
           + nomeGrupo + "' sem ser membro");
       return false;
     }
-    membros.remove(usuario);
     System.out.println("[GERENCIADOR] [INFO] Usuario '" + usuario.getNome() + "' saiu do grupo '" + nomeGrupo
         + "'. Total de membros: " + membros.size());
 
@@ -135,13 +139,38 @@ public class GerenciadorGrupos {
 
     List<InfoUser> listaMembros = new ArrayList<>(gruposExistentes.get(nomeGrupo));
 
-    if (!listaMembros.contains(usuarioRemetente)) {
+    InfoUser membroRemetente = null;
+    for (InfoUser m : listaMembros) {
+      if (m.getNome().trim().equalsIgnoreCase(usuarioRemetente.getNome().trim())) {
+        membroRemetente = m;
+        break;
+      }
+    }
+
+    if (membroRemetente == null) {
       System.out.println("[GERENCIADOR] [WARNING] Bloqueado: Usuario '" + usuarioRemetente.getNome()
           + "' tentou enviar mensagem para o grupo '" + nomeGrupo + "' sem ser membro");
       return new ArrayList<>();
     }
 
-    listaMembros.remove(usuarioRemetente);
+    // Atualiza IP e porta caso tenham mudado ou sido descobertos via datagrama UDP
+    if (usuarioRemetente.getIp() != null && !usuarioRemetente.getIp().isEmpty()) {
+      membroRemetente.setIp(usuarioRemetente.getIp());
+      if (usuarioRemetente.getPorta() > 0) {
+        membroRemetente.setPorta(usuarioRemetente.getPorta());
+      }
+      for (InfoUser u : todosUsuariosAtivos) {
+        if (u.getNome().trim().equalsIgnoreCase(usuarioRemetente.getNome().trim())) {
+          u.setIp(usuarioRemetente.getIp());
+          if (usuarioRemetente.getPorta() > 0) {
+            u.setPorta(usuarioRemetente.getPorta());
+          }
+          break;
+        }
+      }
+    }
+
+    listaMembros.remove(membroRemetente);
     System.out.println("[GERENCIADOR] [INFO] Mensagem de '" + usuarioRemetente.getNome() + "' autorizada para "
         + listaMembros.size() + " destinatario(s) no grupo '" + nomeGrupo + "'");
     return listaMembros;
@@ -198,15 +227,19 @@ public class GerenciadorGrupos {
     System.out.println("[GERENCIADOR] [DEBUG] Usuarios ativos antes do registro: " + todosUsuariosAtivos.size());
     for (InfoUser u : todosUsuariosAtivos) {
       System.out.println("[GERENCIADOR] [DEBUG]   -> " + u.toString());
-      if (u.getNome().equalsIgnoreCase(usuario.getNome())) {
-        if (u.getIp().equals(usuario.getIp())) {
-          todosUsuariosAtivos.remove(u);
-          todosUsuariosAtivos.add(usuario);
-          System.out.println("[GERENCIADOR] [INFO] Usuario '" + usuario.getNome() + "' atualizou sua sessao (Porta UDP: " + usuario.getPorta() + ").");
-          return true;
+      if (u.getNome().trim().equalsIgnoreCase(usuario.getNome().trim())) {
+        u.setIp(usuario.getIp());
+        u.setPorta(usuario.getPorta());
+        for (List<InfoUser> membros : gruposExistentes.values()) {
+          for (InfoUser m : membros) {
+            if (m.getNome().trim().equalsIgnoreCase(usuario.getNome().trim())) {
+              m.setIp(usuario.getIp());
+              m.setPorta(usuario.getPorta());
+            }
+          }
         }
-        System.out.println("[GERENCIADOR] [WARNING] Nome '" + usuario.getNome() + "' ja esta em uso.");
-        return false;
+        System.out.println("[GERENCIADOR] [INFO] Usuario '" + usuario.getNome() + "' atualizou sua sessao (IP: " + usuario.getIp() + " | Porta UDP: " + usuario.getPorta() + ").");
+        return true;
       }
     }
     todosUsuariosAtivos.add(usuario);
@@ -216,12 +249,32 @@ public class GerenciadorGrupos {
   }
 
   /**
-   * Remove um usuario da lista global do servidor.
+   * Remove um usuario da lista global do servidor e de todos os grupos em que estiver.
    * 
    * @param usuario Usuario a ser removido
    */
   public synchronized void removerUsuario(InfoUser usuario) {
-    todosUsuariosAtivos.remove(usuario);
+    if (usuario == null) return;
+    todosUsuariosAtivos.removeIf(u -> u.getNome().trim().equalsIgnoreCase(usuario.getNome().trim()));
+    System.out.println("[GERENCIADOR] [INFO] Usuario '" + usuario.getNome() + "' removido dos usuarios ativos.");
+
+    List<String> gruposParaRemover = new ArrayList<>();
+    for (Map.Entry<String, List<InfoUser>> entry : gruposExistentes.entrySet()) {
+      String nomeGrupo = entry.getKey();
+      List<InfoUser> membros = entry.getValue();
+      boolean removeu = membros.removeIf(m -> m.getNome().trim().equalsIgnoreCase(usuario.getNome().trim()));
+      if (removeu) {
+        System.out.println("[GERENCIADOR] [INFO] Usuario '" + usuario.getNome() + "' removido do grupo '" + nomeGrupo + "'.");
+        if (membros.isEmpty()) {
+          gruposParaRemover.add(nomeGrupo);
+        }
+      }
+    }
+
+    for (String g : gruposParaRemover) {
+      gruposExistentes.remove(g);
+      System.out.println("[GERENCIADOR] [INFO] Grupo '" + g + "' deletado da memoria pois ficou vazio apos remocao do usuario.");
+    }
   }
 
   /**
@@ -281,45 +334,6 @@ public class GerenciadorGrupos {
             .println("[GERENCIADOR] [INFO] Notificacao UPDATE_USERS disparada para " + ativos.size() + " clientes.");
       } catch (Exception e) {
         System.err.println("[GERENCIADOR] [ERROR] Falha ao notificar atualizacao: " + e.getMessage());
-      }
-    }).start();
-  }
-
-  /**
-   * Notifica todos os membros de um grupo com uma mensagem do sistema.
-   * Utilizado para avisar sobre ~JOINED~ e ~LEFT~.
-   */
-  public void notificarMensagemSistema(String nomeGrupo, InfoUser remetenteVirtual, String mensagem) {
-    new Thread(() -> {
-      try (java.net.DatagramSocket socketUDP = new java.net.DatagramSocket()) {
-        Protocol.APDU apdu = new Protocol.APDU(utils.Protocolo.SEND, nomeGrupo, remetenteVirtual.getNome(), mensagem, remetenteVirtual.getPorta());
-        byte[] dados = serializarAPDU(apdu);
-
-        List<InfoUser> membros;
-        synchronized (this) {
-          if (!gruposExistentes.containsKey(nomeGrupo))
-            return;
-          membros = new ArrayList<>(gruposExistentes.get(nomeGrupo));
-        }
-
-        // Nao removemos o remetenteVirtual pois queremos que ele mesmo veja a msg?
-        // Na verdade o Cliente que enviou ja mostra na tela localmente (addChatBubble).
-        // Entao removemos o remetente para ele nao receber de volta se ele ainda
-        // estiver na lista.
-        membros.remove(remetenteVirtual);
-
-        for (InfoUser u : membros) {
-          try {
-            java.net.InetAddress ipDest = java.net.InetAddress.getByName(u.getIp());
-            java.net.DatagramPacket pacote = new java.net.DatagramPacket(dados, dados.length, ipDest, u.getPorta());
-            socketUDP.send(pacote);
-          } catch (Exception e) {
-          }
-        }
-        System.out.println(
-            "[GERENCIADOR] [INFO] Mensagem de sistema (" + mensagem + ") disparada para o grupo '" + nomeGrupo + "'.");
-      } catch (Exception e) {
-        System.err.println("[GERENCIADOR] [ERROR] Falha ao notificar mensagem de sistema: " + e.getMessage());
       }
     }).start();
   }

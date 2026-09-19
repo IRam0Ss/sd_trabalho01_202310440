@@ -136,6 +136,8 @@ public class AtendimentoCliente implements Runnable {
         // Garante presenca global no servidor mesmo se o cliente nao mandou REGISTER previo
         if (this.gerenciador.buscarUsuarioPorNome(usuarioJoin.getNome()) == null) {
           this.gerenciador.registrarUsuario(usuarioJoin);
+          System.out.println("\n[SERVIDOR] >>> CLIENTE REGISTRADO (via JOIN): Nome='" + usuarioJoin.getNome()
+              + "' | IP=" + usuarioJoin.getIp() + " | Porta UDP=" + usuarioJoin.getPorta() + "\n");
           this.gerenciador.notificarAtualizacaoUsuarios();
         }
 
@@ -144,7 +146,6 @@ public class AtendimentoCliente implements Runnable {
           enviarResposta(Protocolo.OK, "Entrou no grupo " + grupoJoin);
           System.out.println(
               "[ATENDIMENTO] [INFO] Processamento de JOIN de '" + usuarioJoin.getNome() + "' concluido.");
-          this.gerenciador.notificarMensagemSistema(grupoJoin, usuarioJoin, "~JOINED~");
         } else {
           enviarResposta(Protocolo.ERRO, "Voce ja esta no grupo " + grupoJoin);
           System.out
@@ -160,15 +161,23 @@ public class AtendimentoCliente implements Runnable {
         }
         boolean registrado = this.gerenciador.registrarUsuario(usuarioRegister);
         if (registrado) {
-          enviarResposta(Protocolo.OK, "Registrado com sucesso");
-          System.out.println("[ATENDIMENTO] [INFO] Cliente '" + usuarioRegister.getNome()
-              + "' registrado silenciosamente no servidor.");
+          enviarResposta(Protocolo.OK, "registrado com sucesso");
+          System.out.println("\n[SERVIDOR] >>> CLIENTE REGISTRADO: Nome='" + usuarioRegister.getNome()
+              + "' | IP=" + usuarioRegister.getIp() + " | Porta UDP=" + usuarioRegister.getPorta() + "\n");
           this.gerenciador.notificarAtualizacaoUsuarios();
         } else {
           enviarResposta(Protocolo.ERRO, "Este nome de usuario ja esta em uso. Escolha outro.");
           System.out.println("[ATENDIMENTO] [WARNING] Registro falhou para '" + usuarioRegister.getNome()
               + "' - Nome duplicado.");
         }
+        break;
+
+      case Protocolo.LOGOUT:
+        InfoUser usuarioLogout = new InfoUser(apdu.getNomeUsuario(), conexao.getInetAddress().getHostAddress(), apdu.getPortaClienteUDP());
+        this.gerenciador.removerUsuario(usuarioLogout);
+        this.gerenciador.notificarAtualizacaoUsuarios();
+        enviarResposta(Protocolo.OK, "Desconectado com sucesso");
+        System.out.println("[ATENDIMENTO] [INFO] Processamento de LOGOUT de '" + usuarioLogout.getNome() + "' concluido.");
         break;
 
       case Protocolo.LEAVE:
@@ -180,7 +189,6 @@ public class AtendimentoCliente implements Runnable {
             enviarResposta(Protocolo.OK, "Saiu do grupo " + grupoLeave);
             System.out.println("[ATENDIMENTO] [INFO] Processamento de LEAVE de '" + usuarioLeave.getNome()
                 + "' concluido.");
-            this.gerenciador.notificarMensagemSistema(grupoLeave, usuarioLeave, "~LEFT~");
           } else {
             enviarResposta(Protocolo.ERRO, "Voce nao esta no grupo " + grupoLeave);
             System.out

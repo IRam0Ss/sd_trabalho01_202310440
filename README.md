@@ -1,152 +1,286 @@
-# E.D.E.N - Sistema de Comunicação Interno
+# E.D.E.N - Sistema de Comunicação Interna
 
 ![Hero Image do E.D.E.N](img/TelaBasica.png)
-*(Imagem da tela depois de entrada no sistema)*
 
-## 📌 Sobre o Projeto
-O **Sistema de Comunicação Interno da E.D.E.N** é uma aplicação cliente-servidor de mensagens instantâneas desenvolvida em Java. A aplicação permite a comunicação em tempo real entre usuários de uma rede, suportando mensagens privadas, mensagens em grupo e notificações de status dinâmicas.
+## Visão Geral
 
-O projeto implementa uma arquitetura híbrida de rede, utilizando protocolos TCP para comunicações confiáveis (como envio de mensagens e comandos) e UDP para notificações e atualizações em tempo real (como entrada/saída de usuários da rede).
+O projeto E.D.E.N é uma aplicação de chat distribuído desenvolvida em Java para comunicação interna em rede local. Ele foi concebido como uma solução híbrida de mensageria, unindo controle confiável via TCP, transferência rápida de mensagens via UDP e descoberta automática de servidor em broadcast.
 
-**Autor:** Iury Ramos Sodre (Matrícula: 202310440)  
-**Início:** 15/06/2026  
-**Última alteração:** 14/09/2026  
-**Disciplina:** Sistemas Distribuídos (UESB - Semestre 08)
+A arquitetura foi pensada para suportar múltiplos usuários simultâneos, grupos de conversa, mensagens privadas, confirmação de recebimento/leitura e notificações em tempo real de presença e atualização de estado.
 
-## 🚀 Funcionalidades
-- **Chat Privado e Global:** Envio de mensagens diretas para usuários específicos ou para o lobby.
-
-  ![Chat Global/Privado](img/MensagensPrivadas.png)
-  *(💡 Dica: Um print de uma conversa privada ou no lobby)*
-
-- **Grupos (Salas de Bate-papo):** Criação de grupos, listagem, entrada (`JOIN`), saída (`LEAVE`) e envio de mensagens para membros de grupos específicos.
-
-  ![Entrando em Grupos](img/entrandoGrupo.gif)
-  *(Entrando em grupos)*
-
-- **Lista de Usuários:** Visualização de usuários online globalmente e dos membros ativos em determinados grupos.
-- **Notificações em Tempo Real:** Atualizações dinâmicas (UDP) indicando na interface quando um usuário se conecta ou desconecta.
-- **Interface Gráfica (GUI):** Interface intuitiva e moderna construída com **JavaFX**, estilizada via CSS e incluindo um modo tutorial (`TutorialOverlay`).
-
-  ![Tela de Tutorial](img/Tutorial.gif)
-  *(Tutorial)*
-
-- **Protocolo Customizado de Aplicação:** Sistema próprio de empacotamento de dados e comandos padronizados (`JOIN`, `SENDPVT`, `LISTUSERS`, etc.) via formato `APDU`.
-
-## 🛠️ Tecnologias e Arquitetura
-- **Linguagem:** Java
-- **Interface Gráfica:** JavaFX
-- **Protocolos de Rede:**
-  - **TCP:** Utilizado para registro, autenticação, troca de mensagens em texto (privadas e grupos) e sincronização segura de listas (usuários/grupos). O Servidor escuta na porta padrão `5000`.
-  - **UDP:** Utilizado para *discovery* rápido e *broadcasting* de eventos de rede sem necessidade de estabelecer uma conexão confiável prolongada, economizando recursos.
-- **Padrão Arquitetural:**
-  - Atendimento Multithread (Múltiplos clientes simultâneos via instâncias de `AtendimentoCliente`).
-
-## ⚙️ Como Executar
-
-Por ser um projeto que utiliza JavaFX e não possuir um gerenciador de dependências (como Maven/Gradle) pré-configurado, recomenda-se a execução através de uma IDE (Eclipse, IntelliJ ou VSCode).
-
-### 1. Inicializando o Servidor
-1. Abra a pasta `Servidor` na sua IDE.
-2. Execute a classe principal: `Servidor/Principal.java`.
-3. O console indicará que o servidor foi iniciado e está escutando na porta configurada (TCP/UDP 5000).
-
-### 2. Inicializando o Cliente
-1. Abra a pasta `Cliente` em uma nova janela da sua IDE.
-2. Certifique-se de configurar o **SDK do JavaFX** no *Build Path* do projeto (adicionando os `.jar` em *Modulepath* e incluindo os VM arguments, caso necessário).
-3. Execute a classe principal: `Cliente/Principal.java`.
-4. A janela da aplicação será exibida. Digite seu nome e conecte-se ao servidor (que pode ser `localhost` se executado na mesma máquina).
-5. Inicie múltiplos clientes para testar e validar o envio de mensagens e atualizações de rede.
-
-## 📖 Estrutura de Pacotes
-
-### 🖥️ Módulo Cliente (`/Cliente`)
-- `model/`: Lógica principal de comunicação com a rede (`Cliente`, `ClienteTCP`, `ClienteUDP`, `MessageListener`).
-- `view/`: Telas e componentes visuais (`ClienteGUI.java`, `TutorialOverlay.java`, `style.css`, ícones).
-- `utils/`: Definições do protocolo (`Protocolo.java`) e estrutura de pacotes `APDU`.
-- `exceptions/`: Tratamento de exceções específicas do sistema (ex: `EDENSysException`).
-
-### 🖧 Módulo Servidor (`/Servidor`)
-- `model/`: Componentes core de roteamento e *bind* do servidor (`Servidor`, `ServidorTCP`, `ServidorUDP`, `ServidorDiscovery`).
-- `controller/`: Classes de gestão de fluxo (`AtendimentoCliente` para gerir as requisições de cada conexão e `GerenciadorGrupos` para controlar as salas e membros).
-- `utils/`: Utilitários e constantes espelhadas do protocolo.
-- `exceptions/`: Tratamento de erros de conexão e *sockets*.
+### Informações do projeto
+- Autor: Iury Ramos Sodré
+- Matrícula: 202310440
+- Disciplina: Sistemas Distribuídos
+- Semestre: 8º
+- Data de início: 15/06/2026
+- Última atualização: 14/09/2026
 
 ---
- Desenvolvido para a disciplina de Sistemas Distribuídos.
 
-<br><br>
+## Objetivo do sistema
 
-# E.D.E.N - Internal Communication System (English Version)
+O sistema tem como objetivo permitir que agentes ou usuários de uma mesma rede interna troquem mensagens em tempo real, organizando a comunicação em:
 
-![E.D.E.N Hero Image](img/TelaBasica.png)
-
-
-## 📌 About the Project
-The **E.D.E.N Internal Communication System** is a client-server instant messaging application developed in Java. The application allows real-time communication between users on a network, supporting private messages, group messages, and dynamic status notifications.
-
-The project implements a hybrid network architecture, using TCP protocols for reliable communications (such as sending messages and commands) and UDP for real-time notifications and updates (such as users joining/leaving the network).
-
-**Author:** Iury Ramos Sodre (ID: 202310440)  
-**Start Date:** 06/15/2026  
-**Last Update:** 09/14/2026  
-**Course:** Distributed Systems (UESB - 8th Semester)
-
-## 🚀 Features
-- **Private and Global Chat:** Send direct messages to specific users or to the lobby.
-
-  ![Global/Private Chat](img/MensagensPrivadas.png)
-
-- **Groups (Chat Rooms):** Group creation, listing, joining (`JOIN`), leaving (`LEAVE`), and sending messages to specific group members.
-
-  ![Joining Groups](img/entrandoGrupo.gif)
-
-- **User List:** View online users globally and active members in specific groups.
-- **Real-Time Notifications:** Dynamic updates (UDP) indicating on the interface when a user connects or disconnects.
-- **Graphical User Interface (GUI):** Intuitive and modern interface built with **JavaFX**, styled via CSS and including a tutorial mode (`TutorialOverlay`).
-
-  ![Tutorial Screen](img/Tutorial.gif)
-
-- **Custom Application Protocol:** Proprietary system for data packaging and standardized commands (`JOIN`, `SENDPVT`, `LISTUSERS`, etc.) via the `APDU` format.
-
-## 🛠️ Technologies and Architecture
-- **Language:** Java
-- **GUI:** JavaFX
-- **Network Protocols:**
-  - **TCP:** Used for registration, authentication, text message exchange (private and groups), and secure synchronization of lists (users/groups). The Server listens on the default port `5000`.
-  - **UDP:** Used for fast *discovery* and *broadcasting* of network events without the need to establish a long-term reliable connection, saving resources.
-- **Architectural Pattern:**
-  - Multithreaded Handling (Multiple simultaneous clients via `AtendimentoCliente` instances).
-
-## ⚙️ How to Run
-
-Because it is a project that uses JavaFX and does not have a pre-configured dependency manager (like Maven/Gradle), it is recommended to run it through an IDE (Eclipse, IntelliJ, or VSCode).
-
-### 1. Starting the Server
-1. Open the `Servidor` folder in your IDE.
-2. Run the main class: `Servidor/Principal.java`.
-3. The console will indicate that the server has started and is listening on the configured port (TCP/UDP 5000).
-
-### 2. Starting the Client
-1. Open the `Cliente` folder in a new window of your IDE.
-2. Make sure to configure the **JavaFX SDK** in the project's *Build Path* (adding the `.jar` files to the *Modulepath* and including the VM arguments, if necessary).
-3. Run the main class: `Cliente/Principal.java`.
-4. The application window will be displayed. Enter your name and connect to the server (which can be `localhost` if running on the same machine).
-5. Start multiple clients to test and validate message sending and network updates.
-
-## 📖 Package Structure
-
-### 🖥️ Client Module (`/Cliente`)
-- `model/`: Main network communication logic (`Cliente`, `ClienteTCP`, `ClienteUDP`, `MessageListener`).
-- `view/`: Screens and visual components (`ClienteGUI.java`, `TutorialOverlay.java`, `style.css`, icons).
-- `utils/`: Protocol definitions (`Protocolo.java`) and `APDU` package structure.
-- `exceptions/`: Handling of system-specific exceptions (e.g., `EDENSysException`).
-
-### 🖧 Server Module (`/Servidor`)
-- `model/`: Core components for routing and server *bind* (`Servidor`, `ServidorTCP`, `ServidorUDP`, `ServidorDiscovery`).
-- `controller/`: Flow management classes (`AtendimentoCliente` to manage requests from each connection and `GerenciadorGrupos` to control rooms and members).
-- `utils/`: Utilities and mirrored protocol constants.
-- `exceptions/`: Connection and *socket* error handling.
+- grupos/channels de conversa
+- mensagens privadas entre usuários
+- listagem de agentes online
+- atualização dinâmica de usuários conectados
+- confirmação de entrega e leitura de mensagens
+- detecção automática de servidor na rede local
 
 ---
- Developed for the Computer Networks 2 course.
+
+## Arquitetura do sistema
+
+### 1. Camada cliente
+A camada cliente é responsável pela interação com o usuário e pelo envio e recebimento de dados na rede. Em termos estruturais, ela compreende:
+
+- interface gráfica em JavaFX
+- conexão TCP para controle
+- socket UDP para mensagens em tempo real
+- mecanismo de descoberta local do servidor
+- processamento de confirmações e eventos de atualização
+
+Principais classes:
+- Cliente
+- ClienteTCP
+- ClienteUDP
+- MessageListener
+- ClienteGUI
+- TutorialOverlay
+
+### 2. Camada servidor
+O servidor atua como ponto central de coordenação, autenticação e roteamento das mensagens. Ele mantém o estado dos usuários e grupos em memória e gerencia o fluxo de eventos.
+
+Principais componentes:
+- Servidor
+- ServidorTCP
+- ServidorUDP
+- ServidorDiscovery
+- GerenciadorGrupos
+- AtendimentoCliente
+
+### 3. Modelo de comunicação
+O sistema aplica uma topologia híbrida:
+
+- TCP: comandos de controle, autenticação, registro e consultas
+- UDP: mensagens de conteúdo, notificações e atualização de presença
+- Discovery UDP: busca automática do IP do servidor na rede local
+
+Essa abordagem reduz a sobrecarga da conexão confiável para operações de controle e mantém a comunicação de conteúdo mais leve e rápida para mensagens instantâneas.
+
+---
+
+## Protocolo de aplicação
+
+A comunicação entre cliente e servidor é encapsulada em classes de protocolo definidas em:
+
+- Cliente/Protocol/APDU.java
+- Cliente/utils/Protocolo.java
+- Servidor/Protocol/APDU.java
+- Servidor/utils/Protocolo.java
+
+### Estrutura da APDU
+A APDU representa uma unidade de dados da aplicação e encapsula campos como:
+
+- operação
+- nome do grupo
+- nome do usuário
+- texto da mensagem
+- destinatário
+- porta UDP do cliente
+- identificador único da mensagem
+- status de confirmação
+- flag de visualização única
+
+### Operações principais
+Constantes do protocolo incluem:
+
+- JOIN
+- LEAVE
+- LIST
+- REGISTER
+- USERS
+- MEMBERS
+- SEND
+- SENDPVT
+- SENDVU
+- CONFIRM
+- BLOCK
+- UNBLOCK
+- UPDATE_USERS
+- SHUTDOWN
+
+A classe Protocolo centraliza as constantes e portas padrão do sistema, incluindo:
+
+- TCP padrão: 6789
+- UDP padrão: 7777
+- Discovery padrão: 8888
+- Compatibilidade legado: 5000 e 5001
+
+---
+
+## Funcionamento do sistema
+
+### Registro e autenticação
+Ao iniciar, o cliente solicita ao usuário um nome e tenta conectar-se ao servidor usando TCP. Em seguida, envia uma APDU de REGISTER contendo:
+
+- nome do usuário
+- IP local do cliente
+- porta UDP local para receber mensagens e notificações
+
+O servidor valida o nome e registra o usuário em sua lista ativa.
+
+### Participação em grupos
+Ao executar JOIN em um grupo, o servidor:
+
+1. cria o grupo se ele ainda não existir
+2. adiciona o usuário à lista de membros
+3. mantém as informações de atualização de IP e porta
+4. responde ao cliente com confirmação OK ou ERRO
+
+### Envio de mensagens
+Mensagens em grupo ou privadas são enviadas por UDP ao servidor. O servidor:
+
+- identifica o remetente
+- valida se ele pertence ao grupo ou se a comunicação está permitida
+- encaminha para destinatários apropriados
+- aplica regras de bloqueio
+- emite confirmações de status quando necessário
+
+### Confirmações de entrega e leitura
+O sistema implementa um mecanismo de confirmação por ticks com status:
+
+- 1: mensagem recebida pelo servidor
+- 2: mensagem entregue ao destinatário
+- 3: mensagem lida pelo destinatário
+
+Esse mecanismo é fundamental para simular confiabilidade mesmo em um transporte não orientado à conexão.
+
+### Atualização de presença
+Quando um usuário entra ou sai do sistema, ou quando há alteração de estado relevante, o servidor dispara notificações UDP para os clientes ativos, permitindo atualização dinâmica da interface e da lista de usuários online.
+
+---
+
+## Interoperabilidade e compatibilidade
+
+O projeto foi concebido para operar em um ambiente local e para tolerar variações de configuração de rede. Isso fica evidente em duas decisões arquiteturais importantes:
+
+### 1. Suporte a múltiplas portas
+O sistema funciona em dois conjuntos de portas:
+
+- padrão moderno: 6789 / 7777 / 8888
+- legado: 5000 / 5001
+
+Essa compatibilidade permite que o sistema interaja com versões anteriores ou ambientes com configuração específica de rede.
+
+### 2. Descoberta automática de servidor
+O serviço de discovery, implementado em ServidorDiscovery, responde a mensagens UDP simples para identificação do servidor na rede local.
+
+Os padrões implementados incluem:
+
+- SERVIDOR_IP → resposta: IP
+- DISCOVER_EDEN → resposta: EDEN_HERE
+
+Isso facilita a conexão automática do cliente sem que o usuário tenha que memorizar endereços fixos.
+
+### 3. Interoperabilidade do protocolo
+A interoperabilidade é boa dentro do ecossistema do próprio projeto, especialmente entre clientes e servidores Java que compartilham a mesma estrutura da APDU. Porém, o protocolo é altamente específico do sistema e depende de serialização Java, o que limita a interoperabilidade com implementações fora do projeto.
+
+Em outras palavras:
+
+- o sistema é interoperável entre versões internas do projeto
+- o protocolo não é um padrão aberto universal
+- ele não é diretamente compatível com clientes de terceiros sem reimplementação da APDU e das convenções de rede
+
+---
+
+## Estrutura do repositório
+
+### Módulo Cliente
+- Cliente/: aplicação do cliente
+- Cliente/model/: lógica de comunicação com o servidor
+- Cliente/view/: telas, JavaFX e componentes visuais
+- Cliente/utils/: constantes e utilitários do protocolo
+- Cliente/exceptions/: exceções específicas do cliente
+
+### Módulo Servidor
+- Servidor/: aplicação do servidor
+- Servidor/model/: serviços de rede e orquestração
+- Servidor/controller/: gerenciamento de grupos e atendimento
+- Servidor/utils/: constantes e utilitários do protocolo
+- Servidor/exceptions/: exceções específicas do servidor
+
+### Recursos auxiliares
+- img/: imagens e assets visuais
+- scratch/: testes e experimentos de integração
+
+---
+
+## Requisitos de execução
+
+### Ambiente
+- Java JDK 8 ou superior
+- JavaFX configurado no ambiente de desenvolvimento
+- rede local com acesso entre cliente e servidor
+
+### Execução sugerida
+Como o projeto não utiliza Maven ou Gradle, a execução é normalmente feita via IDE como VS Code, IntelliJ ou Eclipse.
+
+### 1. Iniciar o servidor
+A classe principal do servidor é:
+
+- Servidor/Principal.java
+
+### 2. Iniciar o cliente
+A classe principal do cliente é:
+
+- Cliente/Principal.java
+
+### 3. Conectar ao ambiente
+No cliente, o usuário deve informar:
+
+- IP do servidor
+- nome de usuário
+
+O cliente terá o servidor detectado automaticamente se estiver na mesma rede local e se o discovery estiver ativo.
+
+---
+
+## Principais pontos fortes
+
+- arquitetura clara e bem separada por responsabilidades
+- uso adequado de TCP para controle e UDP para mensagens rápidas
+- suporte a grupos, mensagens privadas e atualização de presença
+- mecanismo de confirmação por ticks e rastreamento de mensagens
+- descoberta automática do servidor
+- compatibilidade com portas padrões e legadas
+
+---
+
+## Limitações e observações técnicas
+
+- o sistema depende de serialização Java, o que reduz interoperabilidade com outros idiomas e plataformas
+- o estado de grupos e usuários é mantido em memória, sem persistência
+- a correção de falhas e sincronização depende de regras de aplicação bem definidas
+- a descoberta é simples e depende de rede local com broadcast habilitado
+- não há camada de persistência ou autenticação avançada em banco de dados
+
+Essas limitações não invalidam o projeto como exercício acadêmico de sistemas distribuídos, mas indicam claramente que ele foi implementado como solução local e funcional, e não como serviço empresarial de larga escala.
+
+---
+
+## Conclusão
+
+O E.D.E.N é um sistema funcional de chat distribuído em Java, com arquitetura híbrida, protocolos próprios e boa organização modular. Ele demonstra bem os conceitos de comunicação em redes locais, multiplexação de canais, concorrência, grupos e sincronização distribuída em nível de aplicação.
+
+O projeto se destaca pela lógica de projeto e pela integração entre cliente e servidor, além de apresentar um bom nível de sofisticação para um ambiente acadêmico. Sua maior limitação está na interoperabilidade externa, visto que ele depende de convenções internas de serialização e do próprio protocolo de aplicação.
+
+---
+
+## Licença e uso acadêmico
+
+Este projeto foi desenvolvido como parte da disciplina de Sistemas Distribuídos e tem caráter acadêmico e educacional.
+
+Desenvolvido por Iury Ramos Sodré.

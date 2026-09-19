@@ -47,6 +47,7 @@ public class ServidorDiscovery implements Runnable {
   public void run() {
     try {
       socket = new DatagramSocket(porta);
+      socket.setBroadcast(true);
       System.out.println("[DISCOVERY:" + porta + "] Farol UDP ligado na porta " + porta + " aguardando buscas...");
 
       byte[] buffer = new byte[256];
@@ -59,8 +60,8 @@ public class ServidorDiscovery implements Runnable {
             StandardCharsets.UTF_8).trim();
 
         if ("SERVIDOR_IP".equalsIgnoreCase(mensagem)) {
-          System.out.println("[DISCOVERY:" + porta + "] Busca padrao ('SERVIDOR_IP') de: "
-              + pacoteRecebido.getAddress().getHostAddress());
+          System.out.println("[DISCOVERY:" + porta + "] Busca padrao ('SERVIDOR_IP') recebida de: "
+              + pacoteRecebido.getAddress().getHostAddress() + ":" + pacoteRecebido.getPort());
 
           byte[] dadosResposta = "IP".getBytes(StandardCharsets.UTF_8);
           DatagramPacket pacoteResposta = new DatagramPacket(
@@ -70,9 +71,11 @@ public class ServidorDiscovery implements Runnable {
               pacoteRecebido.getPort());
 
           socket.send(pacoteResposta);
+          System.out.println("[DISCOVERY:" + porta + "] Resposta 'IP' enviada para: "
+              + pacoteRecebido.getAddress().getHostAddress() + ":" + pacoteRecebido.getPort());
         } else if ("DISCOVER_EDEN".equalsIgnoreCase(mensagem)) {
-          System.out.println("[DISCOVERY:" + porta + "] Busca EDEN ('DISCOVER_EDEN') de: "
-              + pacoteRecebido.getAddress().getHostAddress());
+          System.out.println("[DISCOVERY:" + porta + "] Busca EDEN ('DISCOVER_EDEN') recebida de: "
+              + pacoteRecebido.getAddress().getHostAddress() + ":" + pacoteRecebido.getPort());
 
           byte[] dadosResposta = "EDEN_HERE".getBytes(StandardCharsets.UTF_8);
           DatagramPacket pacoteResposta = new DatagramPacket(
@@ -82,6 +85,12 @@ public class ServidorDiscovery implements Runnable {
               pacoteRecebido.getPort());
 
           socket.send(pacoteResposta);
+          System.out.println("[DISCOVERY:" + porta + "] Resposta 'EDEN_HERE' enviada para: "
+              + pacoteRecebido.getAddress().getHostAddress() + ":" + pacoteRecebido.getPort());
+        } else {
+          System.out.println("[DISCOVERY:" + porta + "] Mensagem desconhecida recebida de "
+              + pacoteRecebido.getAddress().getHostAddress() + ":" + pacoteRecebido.getPort()
+              + " -> '" + mensagem + "'");
         }
       }
     } catch (Exception e) {
