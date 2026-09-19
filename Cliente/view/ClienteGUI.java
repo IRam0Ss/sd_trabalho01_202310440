@@ -1,11 +1,11 @@
-/**
- * Autor: Iury Ramos Sodre
- * Matricula: 202310440
- * Inicio: 15/06/2026
- * Ultima alteracao: 14/09/2026
- * Nome: ClienteGUI
- * Funcao: Interface Grafica (JavaFX) principal do Cliente E.D.E.N, gerenciando paineis, temas e chats.
- */
+/*****************************************************************
+* Autor..............: Iury Ramos Sodre
+* Matricula..........: 202310440
+* Inicio.............: 15/06/2026
+* Ultima alteracao...: 18/09/2026
+* Nome...............: ClienteGUI
+* Funcao.............: Interface Grafica (JavaFX) principal do Cliente E.D.E.N, gerenciando paineis, temas e chats.
+*************************************************************** */
 
 package view;
 
@@ -852,7 +852,7 @@ public class ClienteGUI extends Application implements MessageListener {
       steps.add(new TutorialOverlay.TutorialStep(
           header,
           "Controles de Canal, Bloqueio e Detalhes",
-          "No topo da conversa, você encontra acoes especiais: em chats privados, use '\u2298 Bloquear' para restringir comunicacoes mutuas; em grupos, use 'Detalhes' para inspecionar os membros da sala."));
+          "No topo da conversa, voce encontra acoes especiais: em chats privados, use '\u2298 Bloquear' para restringir comunicacoes mutuas; em grupos, use 'Detalhes' para inspecionar os membros da sala."));
       steps.add(new TutorialOverlay.TutorialStep(
           btnToggleVU,
           "Transmissao Classificada (Modo VU)",
@@ -1334,7 +1334,7 @@ public class ClienteGUI extends Application implements MessageListener {
           lblVU.setStyle("-fx-text-fill: #8a9b3a; -fx-font-weight: bold;");
           metaBox.getChildren().add(lblVU);
         }
-        Label lblTick = new Label(" \uD83D\uDD52"); // 🕒 Relógio: Enviando / aguardando servidor
+        Label lblTick = new Label(" \uD83D\uDD52"); // Relogio: Enviando / aguardando servidor
         lblTick.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
         lblTick.setStyle("-fx-text-fill: #8a9b3a;");
         if (idMensagem != null) {

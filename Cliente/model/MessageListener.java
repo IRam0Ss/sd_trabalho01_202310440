@@ -1,11 +1,11 @@
-/**
- * Autor: Iury Ramos Sodre
- * Matricula: 202310440
- * Inicio: 15/06/2026
- * Ultima alteracao: 14/09/2026
- * Nome: MessageListener
- * Funcao: Interface de callback Observer para notificacoes assincronas da camada de rede para a GUI.
- */
+/*****************************************************************
+* Autor..............: Iury Ramos Sodre
+* Matricula..........: 202310440
+* Inicio.............: 15/06/2026
+* Ultima alteracao...: 18/09/2026
+* Nome...............: MessageListener
+* Funcao.............: Interface de callback Observer para notificacoes assincronas da camada de rede para a GUI.
+*************************************************************** */
 
 package model;
 

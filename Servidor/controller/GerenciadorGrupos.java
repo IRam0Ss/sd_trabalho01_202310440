@@ -1,11 +1,11 @@
-/**
- * Autor: Iury Ramos Sodre
- * Matricula: 202310440
- * Inicio: 15/06/2026
- * Ultima alteracao: 14/09/2026
- * Nome: GerenciadorGrupos
- * Funcao: Centraliza a gestao de salas/grupos, mapeamento de usuarios ativos e broadcasting de eventos.
- */
+/*****************************************************************
+* Autor..............: Iury Ramos Sodre
+* Matricula..........: 202310440
+* Inicio.............: 15/06/2026
+* Ultima alteracao...: 18/09/2026
+* Nome...............: GerenciadorGrupos
+* Funcao.............: Centraliza a gestao de salas/grupos, mapeamento de usuarios ativos e broadcasting de eventos.
+*************************************************************** */
 
 package controller;
 
@@ -42,6 +42,12 @@ public class GerenciadorGrupos {
     tabelaBloqueios = new HashMap<>();
   }
   
+  /**
+   * Serializa uma APDU em vetor de bytes para envio via datagrama UDP.
+   * 
+   * @param apdu Objeto APDU a ser serializado.
+   * @return Vetor de bytes serializado.
+   */
   private byte[] serializarAPDU(Protocol.APDU apdu) {
     try {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -90,8 +96,7 @@ public class GerenciadorGrupos {
 
   /**
    * Remove um usuario de um grupo. Se o grupo ficar vazio apos a remocao, ele e
-   * deletado
-   * para evitar acumulo de grupos fantasmas na memoria.
+   * deletado para evitar acumulo de grupos fantasmas na memoria.
    * 
    * @param nomeGrupo Nome do grupo
    * @param usuario   Objeto InfoUser contendo os dados do usuario
@@ -123,8 +128,7 @@ public class GerenciadorGrupos {
 
   /**
    * Retorna a lista de membros de um grupo, excluindo o remetente.
-   * E utilizado na operacao SEND para encaminhar a mensagem para todos os membros
-   * corretos.
+   * Utilizado na operacao SEND para encaminhar a mensagem para todos os membros corretos.
    * 
    * @param nomeGrupo        Nome do grupo
    * @param usuarioRemetente Usuario que esta enviando a mensagem
@@ -205,13 +209,12 @@ public class GerenciadorGrupos {
   }
 
   /**
-   * Imprime o estado atual de todos os grupos e seus respectivos membros no
-   * console.
+   * Imprime o estado atual de todos os grupos e seus respectivos membros no console.
    */
   public synchronized void imprimirEstado() {
-    System.out.println("\nESTADO DA ED ");
+    System.out.println("\nESTADO DOS GRUPOS:");
     for (Map.Entry<String, List<InfoUser>> entry : gruposExistentes.entrySet()) {
-      System.out.println("  [" + entry.getKey() + "] → " + entry.getValue());
+      System.out.println("  [" + entry.getKey() + "] -> " + entry.getValue());
     }
     System.out.println("\n");
   } // fim imprimirEstado
@@ -340,6 +343,10 @@ public class GerenciadorGrupos {
 
   /**
    * Adiciona um bloqueio de usuario (bloqueador bloqueia bloqueado).
+   * 
+   * @param bloqueador Nome do usuario que esta bloqueando.
+   * @param bloqueado  Nome do usuario sendo bloqueado.
+   * @return true se o bloqueio foi inserido, false caso contrario.
    */
   public synchronized boolean bloquear(String bloqueador, String bloqueado) {
     if (bloqueador == null || bloqueado == null || bloqueador.equalsIgnoreCase(bloqueado)) {
@@ -352,6 +359,10 @@ public class GerenciadorGrupos {
 
   /**
    * Remove um bloqueio de usuario (bloqueador desbloqueia bloqueado).
+   * 
+   * @param bloqueador Nome do usuario que esta desbloqueando.
+   * @param bloqueado  Nome do usuario sendo desbloqueado.
+   * @return true se o bloqueio foi removido, false caso contrario.
    */
   public synchronized boolean desbloquear(String bloqueador, String bloqueado) {
     if (bloqueador == null || bloqueado == null) {
@@ -367,6 +378,10 @@ public class GerenciadorGrupos {
 
   /**
    * Verifica se ha um bloqueio mutuo entre dois usuarios (u1 bloqueou u2 OU u2 bloqueou u1).
+   * 
+   * @param u1 Nome do primeiro usuario.
+   * @param u2 Nome do segundo usuario.
+   * @return true se houver bloqueio entre as partes, false caso contrario.
    */
   public synchronized boolean isBloqueadoMutuo(String u1, String u2) {
     if (u1 == null || u2 == null) return false;
@@ -375,4 +390,4 @@ public class GerenciadorGrupos {
     return u1BloqueouU2 || u2BloqueouU1;
   }
 
-}// fim da class
+} // fim da class

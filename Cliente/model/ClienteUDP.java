@@ -1,11 +1,11 @@
-/**
- * Autor: Iury Ramos Sodre
- * Matricula: 202310440
- * Inicio: 15/06/2026
- * Ultima alteracao: 15/09/2026
- * Nome: ClienteUDP
- * Funcao: Gerencia o envio e recepcao assincrona de datagramas UDP para mensagens em tempo real.
- */
+/*****************************************************************
+* Autor..............: Iury Ramos Sodre
+* Matricula..........: 202310440
+* Inicio.............: 15/06/2026
+* Ultima alteracao...: 18/09/2026
+* Nome...............: ClienteUDP
+* Funcao.............: Gerencia o envio e recepcao assincrona de datagramas UDP para mensagens em tempo real.
+*************************************************************** */
 
 package model;
 
@@ -227,7 +227,8 @@ public class ClienteUDP implements Runnable {
   }
 
   /**
-   * Loop de recepcao assincrona de datagramas UDP e deserializacao de objetos APDU.
+   * Laco principal de recepcao assincrona de datagramas UDP e desserializacao de objetos APDU.
+   * Notifica a camada ouvinte sobre mensagens recebidas, atualizacoes de presenca e confirmacoes.
    */
   @Override
   public void run() {

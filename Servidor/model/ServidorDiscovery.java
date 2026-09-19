@@ -1,11 +1,11 @@
-/**
- * Autor: Iury Ramos Sodre
- * Matricula: 202310440
- * Inicio: 15/06/2026
- * Ultima alteracao: 14/09/2026
- * Nome: ServidorDiscovery
- * Funcao: Servico de farol UDP para descoberta automatica do IP do servidor por broadcast na rede local.
- */
+/*****************************************************************
+* Autor..............: Iury Ramos Sodre
+* Matricula..........: 202310440
+* Inicio.............: 15/06/2026
+* Ultima alteracao...: 18/09/2026
+* Nome...............: ServidorDiscovery
+* Funcao.............: Servico de farol UDP para descoberta automatica do IP do servidor por broadcast na rede local.
+*************************************************************** */
 
 package model;
 
@@ -43,6 +43,10 @@ public class ServidorDiscovery implements Runnable {
     this.porta = porta;
   }
 
+  /**
+   * Laco de execucao do servico de descoberta UDP.
+   * Aguarda pacotes de broadcast com queries de busca e responde com a presenca do servidor.
+   */
   @Override
   public void run() {
     try {

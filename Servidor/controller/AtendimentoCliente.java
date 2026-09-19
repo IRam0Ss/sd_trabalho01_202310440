@@ -1,11 +1,11 @@
-/**
- * Autor: Iury Ramos Sodre
- * Matricula: 202310440
- * Inicio: 15/06/2026
- * Ultima alteracao: 14/09/2026
- * Nome: AtendimentoCliente
- * Funcao: Thread dedicada para atendimento e processamento concorrente de requisicoes TCP de cada cliente.
- */
+/*****************************************************************
+* Autor..............: Iury Ramos Sodre
+* Matricula..........: 202310440
+* Inicio.............: 15/06/2026
+* Ultima alteracao...: 18/09/2026
+* Nome...............: AtendimentoCliente
+* Funcao.............: Thread dedicada para atendimento e processamento concorrente de requisicoes TCP de cada cliente.
+*************************************************************** */
 
 package controller;
 
@@ -50,6 +50,10 @@ public class AtendimentoCliente implements Runnable {
     }
   }
 
+  /**
+   * Laco principal de leitura de comandos APDU do cliente via stream de objetos TCP.
+   * Realiza a leitura continua e despacha cada APDU para processamento interno.
+   */
   @Override
   public void run() {
     try {
@@ -89,7 +93,7 @@ public class AtendimentoCliente implements Runnable {
 
   /**
    * Envia uma resposta textual serializada padronizada para o cliente via ObjectOutputStream.
-   * Compativeis com qualquer cliente que faca `(String) in.readObject()`.
+   * Compativel com qualquer cliente que faca readObject de String.
    * 
    * @param operacao  Codigo de status (Protocolo.OK ou Protocolo.ERRO).
    * @param mensagem  Texto descritivo ou conteudo da listagem.

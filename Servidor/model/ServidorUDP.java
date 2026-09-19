@@ -1,11 +1,11 @@
-/**
- * Autor: Iury Ramos Sodre
- * Matricula: 202310440
- * Inicio: 15/06/2026
- * Ultima alteracao: 14/09/2026
- * Nome: ServidorUDP
- * Funcao: Servico de recepcao e roteamento de datagramas UDP (mensagens de grupo e diretas).
- */
+/*****************************************************************
+* Autor..............: Iury Ramos Sodre
+* Matricula..........: 202310440
+* Inicio.............: 15/06/2026
+* Ultima alteracao...: 18/09/2026
+* Nome...............: ServidorUDP
+* Funcao.............: Servico de recepcao e roteamento de datagramas UDP (mensagens de grupo e diretas).
+*************************************************************** */
 
 package model;
 
@@ -71,6 +71,10 @@ public class ServidorUDP implements Runnable {
     this.gerenciador = gerenciador;
   }
 
+  /**
+   * Laco principal de escuta de datagramas UDP.
+   * Recebe pacotes, desserializa objetos APDU e delega o processamento e roteamento.
+   */
   @Override
   public void run() {
     try (DatagramSocket conexaoUDP = new DatagramSocket(this.porta)) {
@@ -120,9 +124,10 @@ public class ServidorUDP implements Runnable {
   /**
    * Processa a APDU recebida via UDP e encaminha para os destinatarios apropriados.
    * 
-   * @param conexaoUDP  Socket UDP para envio de pacotes.
-   * @param apdu        Objeto APDU recebido.
-   * @param ipRemetente Endereco IP de origem do pacote.
+   * @param conexaoUDP        Socket UDP para envio de pacotes.
+   * @param apdu              Objeto APDU recebido.
+   * @param ipRemetente       Endereco IP de origem do pacote.
+   * @param portaOrigemPacote Porta efemera ou de origem do pacote recebido.
    */
   private void processarAPDU(DatagramSocket conexaoUDP, Protocol.APDU apdu, java.net.InetAddress ipRemetente, int portaOrigemPacote) {
 

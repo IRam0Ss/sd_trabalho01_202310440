@@ -1,11 +1,11 @@
-/**
- * Autor: Iury Ramos Sodre
- * Matricula: 202310440
- * Inicio: 15/06/2026
- * Ultima alteracao: 14/09/2026
- * Nome: ServidorTCP
- * Funcao: Servico de escuta passiva de conexoes TCP e instanciacao de threads dedicadas de atendimento.
- */
+/*****************************************************************
+* Autor..............: Iury Ramos Sodre
+* Matricula..........: 202310440
+* Inicio.............: 15/06/2026
+* Ultima alteracao...: 18/09/2026
+* Nome...............: ServidorTCP
+* Funcao.............: Servico de escuta passiva de conexoes TCP e instanciacao de threads dedicadas de atendimento.
+*************************************************************** */
 
 package model;
 
@@ -39,6 +39,10 @@ public class ServidorTCP implements Runnable {
     this.gerenciador = gerenciador;
   }
 
+  /**
+   * Laco principal de aceitacao de conexoes TCP de clientes.
+   * Cria uma thread AtendimentoCliente dedicada para cada novo socket conectado.
+   */
   @Override
   public void run() {
     try (ServerSocket servidorTCP = new ServerSocket(porta)) {

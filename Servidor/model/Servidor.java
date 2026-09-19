@@ -1,11 +1,11 @@
-/**
- * Autor: Iury Ramos Sodre
- * Matricula: 202310440
- * Inicio: 15/06/2026
- * Ultima alteracao: 14/09/2026
- * Nome: Servidor (Core Orchestrator)
- * Funcao: Orquestra e inicializa os servicos TCP, UDP e Discovery do Servidor E.D.E.N.
- */
+/*****************************************************************
+* Autor..............: Iury Ramos Sodre
+* Matricula..........: 202310440
+* Inicio.............: 15/06/2026
+* Ultima alteracao...: 18/09/2026
+* Nome...............: Servidor
+* Funcao.............: Orquestra e inicializa os servicos TCP, UDP e Discovery do Servidor E.D.E.N.
+*************************************************************** */
 
 package model;
 

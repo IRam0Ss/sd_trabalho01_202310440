@@ -1,11 +1,11 @@
-/**
- * Autor: Iury Ramos Sodre
- * Matricula: 202310440
- * Inicio: 15/06/2026
- * Ultima alteracao: 14/09/2026
- * Nome: Protocolo
- * Funcao: Centraliza as constantes de operacoes, codigos de resposta e configuracoes de rede.
- */
+/*****************************************************************
+* Autor..............: Iury Ramos Sodre
+* Matricula..........: 202310440
+* Inicio.............: 15/06/2026
+* Ultima alteracao...: 18/09/2026
+* Nome...............: Protocolo
+* Funcao.............: Centraliza as constantes de operacoes, codigos de resposta e configuracoes de rede.
+*************************************************************** */
 
 package utils;
 
@@ -36,6 +36,9 @@ public class Protocolo {
 
   /** Comando SHUTDOWN: notificacao broadcast de encerramento do servidor */
   public static final String SHUTDOWN = "SHUTDOWN";
+
+  /** Comando LOGOUT: desconexao graciosa solicitada pelo cliente */
+  public static final String LOGOUT = "LOGOUT";
 
   /** Comando SENDPVT: envio de mensagem privada direta */
   public static final String SENDPVT = "SENDPVT";

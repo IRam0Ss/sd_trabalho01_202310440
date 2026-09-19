@@ -1,11 +1,11 @@
-/**
- * Autor: Iury Ramos Sodre
- * Matricula: 202310440
- * Inicio: 15/06/2026
- * Ultima alteracao: 14/09/2026
- * Nome: TutorialOverlay
- * Funcao: Componente visual responsavel por apresentar o tutorial interativo (Coach Marks) na GUI.
- */
+/*****************************************************************
+* Autor..............: Iury Ramos Sodre
+* Matricula..........: 202310440
+* Inicio.............: 15/06/2026
+* Ultima alteracao...: 18/09/2026
+* Nome...............: TutorialOverlay
+* Funcao.............: Componente visual responsavel por apresentar o tutorial interativo (Coach Marks) na GUI.
+*************************************************************** */
 
 package view;
 
@@ -34,11 +34,21 @@ import java.util.List;
  */
 public class TutorialOverlay extends Pane {
 
+  /**
+   * Representa uma etapa especifica do tutorial interativo.
+   */
   public static class TutorialStep {
     Node targetNode;
     String title;
     String description;
 
+    /**
+     * Construtor de uma etapa individual do tutorial.
+     * 
+     * @param targetNode  No JavaFX alvo do destaque.
+     * @param title       Titulo explicativo da etapa.
+     * @param description Descricao detalhada da funcionalidade.
+     */
     public TutorialStep(Node targetNode, String title, String description) {
       this.targetNode = targetNode;
       this.title = title;
@@ -53,6 +63,12 @@ public class TutorialOverlay extends Pane {
   private Path overlayPath;
   private VBox balloon;
 
+  /**
+   * Construtor do painel de sobreposicao do tutorial interativo.
+   * 
+   * @param root  Painel raiz da interface sobre o qual a mascara sera renderizada.
+   * @param steps Lista sequencial de etapas do tutorial.
+   */
   public TutorialOverlay(StackPane root, List<TutorialStep> steps) {
     this.root = root;
     this.steps = steps;
@@ -83,6 +99,9 @@ public class TutorialOverlay extends Pane {
     root.heightProperty().addListener((obs, oldVal, newVal) -> updateOverlay());
   }
 
+  /**
+   * Inicia a apresentacao sequencial do tutorial a partir da primeira etapa.
+   */
   public void start() {
     if (steps == null || steps.isEmpty())
       return;
@@ -91,10 +110,16 @@ public class TutorialOverlay extends Pane {
     updateOverlay();
   }
 
+  /**
+   * Finaliza o tutorial e remove o overlay da arvore de componentes visuais.
+   */
   private void end() {
     root.getChildren().remove(this);
   }
 
+  /**
+   * Recalcula a geometria de recorte da mascara e reposiciona o balao descritivo.
+   */
   private void updateOverlay() {
     if (currentStepIndex >= steps.size()) {
       end();

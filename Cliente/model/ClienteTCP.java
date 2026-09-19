@@ -1,11 +1,11 @@
-/**
- * Autor: Iury Ramos Sodre
- * Matricula: 202310440
- * Inicio: 15/06/2026
- * Ultima alteracao: 14/09/2026
- * Nome: ClienteTCP
- * Funcao: Gerencia o canal de comunicacao confiavel TCP (controle, autenticacao e consultas de estado).
- */
+/*****************************************************************
+* Autor..............: Iury Ramos Sodre
+* Matricula..........: 202310440
+* Inicio.............: 15/06/2026
+* Ultima alteracao...: 18/09/2026
+* Nome...............: ClienteTCP
+* Funcao.............: Gerencia o canal de comunicacao confiavel TCP (controle, autenticacao e consultas de estado).
+*************************************************************** */
 
 package model;
 
